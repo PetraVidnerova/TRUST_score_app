@@ -69,14 +69,13 @@ def process_id(id_number):
 
 
 # Create Gradio interface
-with gr.Blocks(title="Simple Score Calculator") as demo:
+with gr.Blocks(title="TRUST Score Calculator") as demo:
     gr.Markdown("""
-    # 📊 Simple Score Calculator
+    # TRUST Score Calculator
     
-    Enter an ID number (1-100) to:
-    1. Fetch data from a public API
-    2. Calculate embeddings using specter2 model
-    3. Display the calculated score
+    Under construction: so far it calculates nothing :)
+                
+    Enter a valid OpenAlex ID (without prefix, e.g. W123456789):
     """)
     
     with gr.Row():
