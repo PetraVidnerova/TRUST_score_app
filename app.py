@@ -1,8 +1,7 @@
 import gradio as gr
 import requests
 
-
-
+from utils import download_paper_data
 
 def load_model():
     """Load the specter2 model lazily"""
@@ -35,33 +34,42 @@ def process_id(id_number):
     """
     Main processing function that:
     1. Fetches data from API
-    2. Calculates embeddings using specter2
-    3. Computes and returns the score
     """
     if not id_number:
         return "Please enter an ID number", "", 0.0
     
-    try:
-        # Convert to integer to validate
-        id_num = int(id_number)
-        if id_num < 1 or id_num > 100:
-            return "Please enter an ID between 1 and 100", "", 0.0
-    except ValueError:
-        return "Please enter a valid integer ID", "", 0.0
+    if not id_number.startswith("W"):
+        return "Please enter a valid OpenAlex ID starting with 'W'", "", 0.0
     
     # Step 1: Fetch data from API
-    status = "Fetching data from API..."
-    data = fetch_data_from_api(id_num)
+    status = "Fetching paper metadata from API... may take a while."
+    data = download_paper_data(id_number)
     
     if "error" in data:
         return f"Error: {data['error']}", "", 0.0
     
+
     # Prepare output
     api_data_display = f"""
 **API Data Retrieved:**
-- **ID:** {data.get('id', 'N/A')}
-- **Score:** {data.get('score', 'N/A')}
+  **Title:** {data.get('title', 'N/A')}
+
+  **Abstract:** {data.get('abstract', 'N/A')[:300] + '...'}
+
+  **Referenced Works:** {len(data.get('referenced_works', []))}
 """
+    
+    if "title" not in data:
+        result_message = "⚠️ No title found in the API data. Score cannot be calculated."
+    elif "abstract" not in data or data["abstract"] is None:
+        result_message = "⚠️ No abstract found in the API data. Score cannot be calculated."
+    elif len(data.get("referenced_works", [])) == 0:
+        result_message = "⚠️ No referenced works found in the API data. Score cannot be calculated."
+    else:
+        result_message = None
+    
+    if result_message is not None:
+        return result_message, api_data_display, 0.0
     
     result_message = f"✅ Processing complete! Score calculated successfully."
     
@@ -75,7 +83,7 @@ with gr.Blocks(title="TRUST Score Calculator") as demo:
     
     Under construction: so far it calculates nothing :)
                 
-    Enter a valid OpenAlex ID (without prefix, e.g. W123456789):
+    Enter a valid OpenAlex ID (without prefix, e.g. W4395687037):
     """)
     
     with gr.Row():
