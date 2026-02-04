@@ -34,21 +34,21 @@ def process_id(id_number):
     1. Fetches data from API
     """
     if not id_number:
-        yield "Please enter an ID number", "", 0.0
+        yield "Please enter an ID number", "", 0.0, None
         return 
     if not id_number.startswith("W"):
-        yield "Please enter a valid OpenAlex ID starting with 'W'", "", 0.0
+        yield "Please enter a valid OpenAlex ID starting with 'W'", "", 0.0, None
         return 
     
     # Step 1: Fetch data from API
     status = "Fetching paper metadata from API... may take a while."
-    yield status, "", None
+    yield status, "", None, None  
     data = download_paper_data(id_number)
     
     #print("Data fetched:", data)
 
     if "error" in data:
-        yield f"Error: {data['error']}", "", 0.0
+        yield f"Error: {data['error']}", "", 0.0, None
         return
 
     # Prepare output
@@ -72,10 +72,10 @@ def process_id(id_number):
         result_message = None
     
     if result_message is not None:
-        yield result_message, api_data_display, 0.0
+        yield result_message, api_data_display, 0.0, None
         return
     else:
-        yield "Now we will process referenced works...", api_data_display, None
+        yield "Now we will process referenced works...", api_data_display, None, None
 
     title = data["title"]
     abstract = data["abstract"]
@@ -86,30 +86,30 @@ def process_id(id_number):
         titles_abstracts.append(item)
         i += 1
         if i % 10 == 0:
-            yield f"Now we will process referenced works... ({i}/{len(data.get('referenced_works', []))} processed)", api_data_display, None
+            yield f"Now we will process referenced works... ({i}/{len(data.get('referenced_works', []))} processed)", api_data_display, None, None
    
     if len(titles_abstracts) == 0:
         result_message = "⚠️ No valid referenced works found. Score cannot be calculated."
-        yield result_message, api_data_display, 0.0
+        yield result_message, api_data_display, 0.0, None
         return 
         
-    yield "Referenced works processed successfully. Now calculating the embeddings... be patient", api_data_display, None
-    
+    yield "Referenced works processed successfully. Now calculating the embeddings... be patient", api_data_display, None, None
+
     for result in model.embed([(title, abstract)], titles_only=False):
         paper_embedding = result
-    yield "Calculating embeddings for referenced works... no be really patient", api_data_display, None
+    yield "Calculating embeddings for referenced works... no be really patient", api_data_display, None , None
     for result in model.embed(titles_abstracts, titles_only=False):
         if isinstance(result, str):
-            yield result, api_data_display, None
+            yield result, api_data_display, None    , None
         else:
             ref_embeddings = result
 
-    yield "Calculating the final score...", api_data_display, None
+    yield "Calculating the final score...", api_data_display, None, None
     score = calculate_score(paper_embedding, ref_embeddings)
 
     result_message = f"✅ Processing complete! Score calculated successfully."
     
-    yield result_message, api_data_display, score
+    yield result_message, api_data_display, score, None, None 
 
 
 # Create Gradio interface
@@ -139,10 +139,16 @@ with gr.Blocks(title="TRUST Score Calculator") as demo:
         
         with gr.Column():
             score_output = gr.Number(
-                label="Calculated Score",
+                label="Calculated Raw Score",
                 precision=6
             )
-    
+
+        with gr.Column():
+            normalized_output = gr.Number(
+                label="Normalized Score (0-1)",
+                precision=6
+            )
+
     status_output = gr.Textbox(
         label="Status",
         lines=2
@@ -156,7 +162,7 @@ with gr.Blocks(title="TRUST Score Calculator") as demo:
     submit_btn.click(
         fn=process_id,
         inputs=[id_input],
-        outputs=[status_output, api_data_output, score_output]
+        outputs=[status_output, api_data_output, score_output, normalized_output]
     )
     
     # Also allow Enter key to submit
