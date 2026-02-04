@@ -77,10 +77,15 @@ class Embeddings():
             for i in range(0, len(text_batch), batchsize)
         ]
         embeddings = []
+        i = 0
         for b in batches:
             embeddings.append(
                 self.embed_batch(b)
             )
-            yield f"Embeddings calculated for {len(embeddings)*batchsize}/{len(text_batch)} items..."
+            i += 1
+            yield (
+                f"Embeddings calculated for {len(embeddings)*batchsize}/{len(text_batch)} items..."
+                + "👻" * (len(batches)-i)
+            )
         result = torch.vstack(embeddings)
         yield result

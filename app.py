@@ -1,6 +1,5 @@
 import gradio as gr
-import requests
-
+    
 from utils import download_paper_data, download_titles_and_abstracts, calculate_score
 from embeddings import Embeddings
 
@@ -34,10 +33,10 @@ def process_id(id_number):
     1. Fetches data from API
     """
     if not id_number:
-        yield "Please enter an ID number", "", 0.0, None
+        yield "💀 Please enter an ID number", "", 0.0, None
         return 
     if not id_number.startswith("W"):
-        yield "Please enter a valid OpenAlex ID starting with 'W'", "", 0.0, None
+        yield "💀 Please enter a valid OpenAlex ID starting with 'W'", "", 0.0, None
         return 
     
     # Step 1: Fetch data from API
@@ -48,7 +47,7 @@ def process_id(id_number):
     #print("Data fetched:", data)
 
     if "error" in data:
-        yield f"Error: {data['error']}", "", 0.0, None
+        yield f"☠️ Error: {data['error']}", "", 0.0, None
         return
 
     # Prepare output
@@ -75,7 +74,7 @@ def process_id(id_number):
         yield result_message, api_data_display, 0.0, None
         return
     else:
-        yield "Now we will process referenced works...", api_data_display, None, None
+        yield "✅ Now we will process referenced works...", api_data_display, None, None
 
     title = data["title"]
     abstract = data["abstract"]
@@ -86,18 +85,18 @@ def process_id(id_number):
         titles_abstracts.append(item)
         i += 1
         if i % 10 == 0:
-            yield f"Now we will process referenced works... ({i}/{len(data.get('referenced_works', []))} processed)", api_data_display, None, None
+            yield f"❯❯❯❯ Now we will process referenced works... ({i}/{len(data.get('referenced_works', []))} processed)", api_data_display, None, None  
    
     if len(titles_abstracts) == 0:
         result_message = "⚠️ No valid referenced works found. Score cannot be calculated."
         yield result_message, api_data_display, 0.0, None
         return 
         
-    yield "Referenced works processed successfully. Now calculating the embeddings... be patient", api_data_display, None, None
+    yield "✅ Referenced works processed successfully. Now calculating the embeddings... be patient ⌛", api_data_display, None, None
 
     for result in model.embed([(title, abstract)], titles_only=False):
         paper_embedding = result
-    yield "Calculating embeddings for referenced works... no be really patient", api_data_display, None , None
+    yield "Calculating embeddings for referenced works... now be really patient ⌛⌛⌛", api_data_display, None , None
     for result in model.embed(titles_abstracts, titles_only=False):
         if isinstance(result, str):
             yield result, api_data_display, None    , None
@@ -107,15 +106,15 @@ def process_id(id_number):
     yield "Calculating the final score...", api_data_display, None, None
     score = calculate_score(paper_embedding, ref_embeddings)
 
-    result_message = f"✅ Processing complete! Score calculated successfully."
+    result_message = f"🎉 Processing complete! Score calculated successfully."
     
-    yield result_message, api_data_display, score, None, None 
+    yield result_message, api_data_display, score, None 
 
 
 # Create Gradio interface
 with gr.Blocks(title="TRUST Score Calculator") as demo:
     gr.Markdown("""
-    # TRUST Score Calculator
+    # 🤖 TRUST Score Calculator
     
     Please use this app only if you have a real reason and for research purposes.
     This app is intended only for demnonstration, if you need to calculate scores for more papers,
