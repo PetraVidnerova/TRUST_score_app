@@ -1,7 +1,11 @@
+import time
 import gradio as gr
     
 from utils import download_paper_data, download_titles_and_abstracts, calculate_score
 from embeddings import Embeddings
+
+COOLDOWN_SECONDS = 10   
+user_last_request = {} # to track last request time per user
 
 model = Embeddings()
 
@@ -27,11 +31,17 @@ def fetch_data_from_api(id_number):
 
 
 
-def process_id(id_number):
+def process_id(id_number, session_id):
     """
     Main processing function that:
     1. Fetches data from API
     """
+    now = time.time()
+    last_time = user_last_request.get(session_id, 0)
+    if now - last_time < COOLDOWN_SECONDS:
+        raise gr.Error(f"⏱ Please wait {int(COOLDOWN_SECONDS - (now - last_time))}s before submitting again.")
+    user_last_request[session_id] = now
+
     if not id_number:
         yield "💀 Please enter an ID number", "", 0.0, None
         return 
@@ -105,6 +115,7 @@ def process_id(id_number):
 
     yield "Calculating the final score...", api_data_display, None, None
     score = calculate_score(paper_embedding, ref_embeddings)
+    time.sleep(0.5)
 
     result_message = f"🎉 Processing complete! Score calculated successfully."
     
@@ -126,7 +137,8 @@ with gr.Blocks(title="TRUST Score Calculator") as demo:
     Made by Petra Vidnerová (petra@cs.cas.cz) as part of the TRUST project. 
     Thanks also to the authors of the **specter2** model.
     """)
-    
+    session_state = gr.State() 
+
     with gr.Row():
         with gr.Column():
             id_input = gr.Textbox(
@@ -160,15 +172,15 @@ with gr.Blocks(title="TRUST Score Calculator") as demo:
     # Set up the event handler
     submit_btn.click(
         fn=process_id,
-        inputs=[id_input],
+        inputs=[id_input, session_state],
         outputs=[status_output, api_data_output, score_output, normalized_output]
     )
     
     # Also allow Enter key to submit
     id_input.submit(
         fn=process_id,
-        inputs=[id_input],
-        outputs=[status_output, api_data_output, score_output]
+        inputs=[id_input, session_state],
+        outputs=[status_output, api_data_output, score_output, normalized_output]
     )
     
     gr.Markdown("""
@@ -179,4 +191,7 @@ with gr.Blocks(title="TRUST Score Calculator") as demo:
 
 
 if __name__ == "__main__":
+    demo.queue(
+        max_size=10            # prevents overload
+    )
     demo.launch()
