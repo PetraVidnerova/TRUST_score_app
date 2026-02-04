@@ -1,0 +1,66 @@
+import logging 
+import requests
+import time
+
+from tenacity import (
+    retry, stop_after_attempt, retry_if_exception_type, 
+    before_sleep_log, wait_random_exponential
+)
+
+logger = logging.getLogger("__main__")
+
+@retry(
+    stop=stop_after_attempt(5),
+    wait=wait_random_exponential(multiplier=1, max=10),
+    retry=retry_if_exception_type(requests.exceptions.HTTPError),
+    before_sleep=before_sleep_log(logger, logging.WARNING),
+    retry_error_callback=lambda _: None
+)
+def send_request(url, params, timeout):
+    params["mailto"] = "petra@cs.cas.cz"
+    response = requests.get(
+        url,
+        params=params,
+        timeout=timeout
+    )
+    if response.status_code == 404: 
+        logger.warning(f"Data not found at {url}.")
+        return None
+    response.raise_for_status()
+    data = response.json()
+    return data
+
+def eat_prefix(alexid):
+    PREFIX = "https://openalex.org/"
+    if alexid.startswith(PREFIX):
+        return alexid[len(PREFIX):]
+    else:
+        return alexid
+
+def download_paper_data(alexid):
+    base_url = "https://api.openalex.org/works/"
+    full_url = base_url + eat_prefix(alexid)
+    params = {
+        "select": "title,abstract_inverted_index,referenced_works"
+    }
+    timeout = 10
+    data = send_request(full_url, params, timeout)
+    if data is None:
+        return {"error": "Error during fetching data for given OpenAlex ID."}
+    if data["abstract_inverted_index"] is not None:
+        data["abstract"] = create_abstract(data["abstract_inverted_index"])
+    return data
+
+def create_abstract(abstract_index):
+    if abstract_index is None:
+        return None
+    maximum = 0
+    for indexes in abstract_index.values():
+        m = max(indexes)
+        if m > maximum:
+            maximum = m
+    words = [""] * (maximum+1)
+    for w, indexes in abstract_index.items():
+        for i in indexes:
+            words[i] = w
+    return " ".join(words)
