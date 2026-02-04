@@ -95,9 +95,15 @@ def process_id(id_number):
         
     yield "Referenced works processed successfully. Now calculating the embeddings... be patient", api_data_display, None
     
-    paper_embedding = model.embed([(title, abstract)], titles_only=False)
-    yield "Calculating embeddings for referenced works...", api_data_display, None
-    ref_embeddings = model.embed(titles_abstracts, titles_only=False)
+    for result in model.embed([(title, abstract)], titles_only=False):
+        paper_embedding = result
+    yield "Calculating embeddings for referenced works... no be really patient", api_data_display, None
+    for result in model.embed(titles_abstracts, titles_only=False):
+        if isinstance(result, str):
+            yield result, api_data_display, None
+        else:
+            ref_embeddings = result
+
     yield "Calculating the final score...", api_data_display, None
     score = calculate_score(paper_embedding, ref_embeddings)
 
@@ -111,15 +117,21 @@ with gr.Blocks(title="TRUST Score Calculator") as demo:
     gr.Markdown("""
     # TRUST Score Calculator
     
-    Under construction: so far it calculates nothing :)
-                
+    Please use this app only if you have a real reason and for research purposes.
+    This app is intended only for demnonstration, if you need to calculate scores for more papers,
+                please download our script from GitHub and run it locally or on your computer. Using
+                GPU is highly recommended, also having API key for OpenAlex will help and speed up
+                the data fetching.                
     Enter a valid OpenAlex ID.
+                
+    Made by Petra Vidnerová (petra@cs.cas.cz) as part of the TRUST project. 
+    Thanks also to the authors of the **specter2** model.
     """)
     
     with gr.Row():
         with gr.Column():
             id_input = gr.Textbox(
-                label="Enter OpenAlex ID (e.g. WW3081305497)", 
+                label="Enter OpenAlex ID (e.g. W3081305497)", 
                 placeholder="e.g., W3081305497",
                 lines=1
             )
