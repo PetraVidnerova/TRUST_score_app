@@ -114,12 +114,15 @@ def process_id(id_number, session_id):
             ref_embeddings = result
 
     yield "Calculating the final score...", api_data_display, None, None
-    score = calculate_score(paper_embedding, ref_embeddings)
+    score1 = calculate_score(paper_embedding, ref_embeddings)
+    score2 = calculate_score(None, ref_embeddings)
+    score = (score1 * score2) / (score1 + score2)
+    normalized_score = (score - 0.01) / (0.1 - 0.01) # todo adjust min/max based on real data
     time.sleep(0.5)
 
     result_message = f"🎉 Processing complete! Score calculated successfully."
     
-    yield result_message, api_data_display, score, None 
+    yield result_message, api_data_display, score, normalized_score 
 
 
 # Create Gradio interface

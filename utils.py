@@ -80,6 +80,8 @@ def create_abstract(abstract_index):
 def calculate_score(paper_embedding, ref_embeddings):
     if ref_embeddings.shape[0] == 0:
         return 0.0
+    if paper_embedding is None:
+        paper_embedding = ref_embeddings.mean(axis=0).unsqueeze(0)
     similarities = torch.nn.functional.cosine_similarity(
         paper_embedding,
         ref_embeddings,
