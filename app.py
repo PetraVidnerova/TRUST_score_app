@@ -1,12 +1,10 @@
 import gradio as gr
 import requests
 
-from utils import download_paper_data, download_titles_and_abstracts
+from utils import download_paper_data, download_titles_and_abstracts, calculate_score
+from embeddings import Embeddings
 
-def load_model():
-    """Load the specter2 model lazily"""
-    print("Model loaded successfully!")
-    
+model = Embeddings()
 
 def fetch_data_from_api(id_number):
     """
@@ -36,20 +34,22 @@ def process_id(id_number):
     1. Fetches data from API
     """
     if not id_number:
-        return "Please enter an ID number", "", 0.0
-    
+        yield "Please enter an ID number", "", 0.0
+        return 
     if not id_number.startswith("W"):
-        return "Please enter a valid OpenAlex ID starting with 'W'", "", 0.0
+        yield "Please enter a valid OpenAlex ID starting with 'W'", "", 0.0
+        return 
     
     # Step 1: Fetch data from API
     status = "Fetching paper metadata from API... may take a while."
+    yield status, "", None
     data = download_paper_data(id_number)
     
-    print("Data fetched:", data)
+    #print("Data fetched:", data)
 
     if "error" in data:
-        return f"Error: {data['error']}", "", 0.0
-    
+        yield f"Error: {data['error']}", "", 0.0
+        return
 
     # Prepare output
     api_data_display = f"""
@@ -73,35 +73,37 @@ def process_id(id_number):
     
     if result_message is not None:
         yield result_message, api_data_display, 0.0
-        end = True
+        return
     else:
         yield "Now we will process referenced works...", api_data_display, None
-        end = False 
 
-    if not end:
-        title = data["title"]
-        abstract = data["abstract"]
+    title = data["title"]
+    abstract = data["abstract"]
 
-        titles_abstracts = []
-        i = 0 
-        for item in download_titles_and_abstracts(data.get("referenced_works", [])):
-            titles_abstracts.append(item)
-            i += 1
+    titles_abstracts = []
+    i = 0 
+    for item in download_titles_and_abstracts(data.get("referenced_works", [])):
+        titles_abstracts.append(item)
+        i += 1
+        if i % 10 == 0:
             yield f"Now we will process referenced works... ({i}/{len(data.get('referenced_works', []))} processed)", api_data_display, None
    
-        if len(titles_abstracts) == 0:
-            result_message = "⚠️ No valid referenced works found. Score cannot be calculated."
-            yield result_message, api_data_display, 0.0
-            end = True
-        else:
-            yield "Referenced works processed successfully. Now calculating the embeddings... be patient", api_data_display, None
-
+    if len(titles_abstracts) == 0:
+        result_message = "⚠️ No valid referenced works found. Score cannot be calculated."
+        yield result_message, api_data_display, 0.0
+        return 
+        
+    yield "Referenced works processed successfully. Now calculating the embeddings... be patient", api_data_display, None
     
-
+    paper_embedding = model.embed([(title, abstract)], titles_only=False)
+    yield "Calculating embeddings for referenced works...", api_data_display, None
+    ref_embeddings = model.embed(titles_abstracts, titles_only=False)
+    yield "Calculating the final score...", api_data_display, None
+    score = calculate_score(paper_embedding, ref_embeddings)
 
     result_message = f"✅ Processing complete! Score calculated successfully."
     
-    yield result_message, api_data_display, data.get('score', 0.0)
+    yield result_message, api_data_display, score
 
 
 # Create Gradio interface
@@ -126,7 +128,7 @@ with gr.Blocks(title="TRUST Score Calculator") as demo:
         with gr.Column():
             score_output = gr.Number(
                 label="Calculated Score",
-                precision=2
+                precision=6
             )
     
     status_output = gr.Textbox(

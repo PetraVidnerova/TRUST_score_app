@@ -1,6 +1,6 @@
 import logging 
 import requests
-import time
+import torch
 
 from tenacity import (
     retry, stop_after_attempt, retry_if_exception_type, 
@@ -76,3 +76,14 @@ def create_abstract(abstract_index):
         for i in indexes:
             words[i] = w
     return " ".join(words)
+
+def calculate_score(paper_embedding, ref_embeddings):
+    if ref_embeddings.shape[0] == 0:
+        return 0.0
+    similarities = torch.nn.functional.cosine_similarity(
+        paper_embedding,
+        ref_embeddings,
+        dim=1
+    )
+    score = similarities.mean().item()
+    return 1.0 - score
