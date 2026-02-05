@@ -13,7 +13,7 @@ short_description: simple app for the purpose of novelty challenge
 
 <hr>
 
-<img src="img/logo.png" width="200px" align="right"/>
+<img src="http://github.com/PetraVidnerova/TRUST_score_app/blob/main/img/logo.png?raw=true" width="200px" align="right"/>
 
 # 📜 TRUST Score Calculator 
 

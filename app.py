@@ -144,9 +144,10 @@ with gr.Blocks(title="TRUST Score Calculator") as demo:
                 id_input = gr.Textbox(
                     label="Enter OpenAlex ID (e.g. W3081305497)", 
                     placeholder="e.g., W3081305497",
-                    lines=1
+                    lines=1,
+                    scale=3
                 )
-                submit_btn = gr.Button("Calculate Score", variant="primary")
+                submit_btn = gr.Button("Calculate Score", variant="primary", scale=1)
             with gr.Row():
                 gr.Markdown("""
                 Or pick an example ID:
@@ -154,9 +155,9 @@ with gr.Blocks(title="TRUST Score Calculator") as demo:
             with gr.Row():
                 id_input_alt = gr.Dropdown(
                     choices=list(choice_collection.keys()),
-                    label="Pick a fruit"
+                    label="Pick a fruit", scale=3
                 )
-                go_btn = gr.Button("Go!")  
+                go_btn = gr.Button("Go!", scale=1)  
 
         with gr.Column(scale=2):
 
@@ -239,4 +240,4 @@ if __name__ == "__main__":
     }
     """
     #demo.launch(css=CSS_STRING)
-    demo.launch(allowed_paths=["img"])
+    demo.launch(css=CSS_STRING)

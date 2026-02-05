@@ -1,5 +1,7 @@
+<img src="http://github.com/PetraVidnerova/TRUST_score_app/blob/main/img/logo.png?raw=true" width="200px" align="right"/>
+
 # 📜 TRUST Score Calculator 
-<img src="/file=img/logo.png" width="400px" align="right"/>
+
 
 Please use this app only if you have a real reason and for research purposes.
     
