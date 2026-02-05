@@ -4,8 +4,8 @@ import pandas as pd
 from requests import options 
 import gradio as gr
     
-from utils import download_paper_data, download_titles_and_abstracts, calculate_score
-from embeddings import Embeddings
+from utils.utils import download_paper_data, download_titles_and_abstracts, calculate_score
+from utils.embeddings import Embeddings
 
 COOLDOWN_SECONDS = 10   
 user_last_request = {} # to track last request time per user
@@ -239,4 +239,4 @@ if __name__ == "__main__":
     }
     """
     #demo.launch(css=CSS_STRING)
-    demo.launch()
+    demo.launch(allowed_paths=["img"])
