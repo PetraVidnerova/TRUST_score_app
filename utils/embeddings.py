@@ -17,10 +17,10 @@ def mean_pooling(model_output, attention_mask):
 
 class Embeddings():
 
-    def __init__(self):
+    def __init__(self, device="auto"):
 
         self.tokenizer = AutoTokenizer.from_pretrained('allenai/specter2_base')
-        self.model = AutoAdapterModel.from_pretrained('allenai/specter2_base', device_map="auto")
+        self.model = AutoAdapterModel.from_pretrained('allenai/specter2_base', device_map=device)
         self.model.load_adapter("allenai/specter2",
                                 source="hf",
                                 load_as="specter2",

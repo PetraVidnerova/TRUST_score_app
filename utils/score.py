@@ -4,7 +4,7 @@ from pathlib import Path
 
 from torch import cosine_similarity
 from utils.embeddings import Embeddings
-from utils.utils import download_paper_data 
+from utils.utils import download_paper_data, send_request, eat_prefix, create_abstract
 
 logger = logging.getLogger("__main__")
 
@@ -56,9 +56,10 @@ class Score():
     
 class Evaluator():
 
-    def __init__(self, online:bool=False):
+    def __init__(self, online:bool=False, api_key:str=None):
         """ Load saved data if their exists and we are not online. """
         self.online = online
+        self.api_key = api_key
         self.embeddings_model = Embeddings()
 
         self.titles_cache = {} # openalexid -> title
@@ -152,6 +153,72 @@ class Evaluator():
 
         return paper 
     
+    def fetch_ref_data_batched(self, paper:Paper):
+        if not self.api_key:
+            return fetch_ref_data(self, paper)
+        
+        batch_size = 10
+        to_process = [] # papes that has to be fetched
+        # first use cache
+        for ref in paper.references:
+            if ref in self.titles_cache and ref in self.abstracts_cache:
+                title = self.titles_cache[ref]
+                abstract = self.abstracts_cache[ref]
+                paper.ref_data.append((title, abstract))
+            else:
+                to_process.append(ref)
+        # now process in batches
+        for i in range(0, len(to_process), batch_size):
+            works = to_process[i:i+batch_size]
+            works = [eat_prefix(w) for w in works]
+           
+            url = "https://api.openalex.org/works"
+            params = {
+                "api_key": self.api_key,
+                "filter": "openalex:" + "|".join(works),
+                "select": "id,title,abstract_inverted_index"
+            }
+            data = send_request(url, params, 10)
+            if data is None:
+                raise ValueError("Error during batched fetching of reference data.")
+            for item in data["results"]:
+                openalexid = eat_prefix(item["id"])
+                title = item.get("title", None)
+                abstract = item.get("abstract_inverted_index", None)
+                abstract = create_abstract(abstract)
+                if title is None:
+                    logger.warning(f"Title not found for reference {openalexid}. Skipping this reference.")
+                    continue
+                self.titles_cache[openalexid] = title
+                self.abstracts_cache[openalexid] = abstract
+                paper.ref_data.append((title, abstract))
+
+        return self.check_ref_data(paper)
+
+    def check_ref_data(self, paper:Paper):
+        if len(paper.ref_data) == 0:
+            paper.status = "No valid references found after fetching data."
+            return paper
+        
+        # have we enough abstracts to calculate the score based on abstracts?
+        if not paper.titles_only:
+            have_abstract = 0
+            for _, abstract in paper.ref_data:
+                if abstract is not None:
+                    have_abstract += 1
+                    
+            if have_abstract < 5:
+                paper.titles_only = True
+                logger.warning(f"Not enough abstracts found for references of paper {paper.openalexid}. Will calculate score based on titles only.")
+                paper.ref_data = [(title, None) for title, _ in paper.ref_data]
+            else:
+                paper.ref_data = [
+                    (title, abstract)
+                    for title, abstract in paper.ref_data
+                    if abstract is not None
+                ]
+        return paper
+    
     def fetch_ref_data(self, paper:Paper):
         logger.debug(f"Fetching reference data for paper {paper.openalexid}. Number of references: {len(paper.references)}")
         for ref in paper.references:
@@ -194,30 +261,8 @@ class Evaluator():
                     abstract = None
             paper.ref_data.append((title, abstract))
 
-        if len(paper.ref_data) == 0:
-            paper.status = "No valid references found after fetching data."
-            return paper
-        
-        # have we enough abstracts to calculate the score based on abstracts?
-        if not paper.titles_only:
-            have_abstract = 0
-            for _, abstract in paper.ref_data:
-                if abstract is not None:
-                    have_abstract += 1
-                    
-            if have_abstract < 5:
-                paper.titles_only = True
-                logger.warning(f"Not enough abstracts found for references of paper {paper.openalexid}. Will calculate score based on titles only.")
-                paper.ref_data = [(title, None) for title, _ in paper.ref_data]
-            else:
-                paper.ref_data = [
-                    (title, abstract)
-                    for title, abstract in paper.ref_data
-                    if abstract is not None
-                ]
-
-        return paper 
-
+        return self.check_ref_data(paper)
+    
     def calculate_embeddings(self, paper:Paper):
         # first try cache 
         if paper.openalexid in self.paper_embeddings_cache:
@@ -271,7 +316,7 @@ class Evaluator():
             return self.return_dummy_scores(paper)
         logger.debug(f"Paper data fetched successfully for {openalexid}. Title: {paper.title}, Abstract: {'Yes' if paper.abstract else 'No'}, Number of references: {len(paper.references)}")
 
-        paper = self.fetch_ref_data(paper) 
+        paper = self.fetch_ref_data_batched(paper) 
         logger.debug(f"Paper status after fetching data: {paper.status}.")
         if paper.status != "OK":
             return self.return_dummy_scores(paper)

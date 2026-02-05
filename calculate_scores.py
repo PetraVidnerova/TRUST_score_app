@@ -19,7 +19,8 @@ logger.addHandler(handler)
 @click.argument("filename", type=click.Path(exists=True), default="data/challenge_data.csv")
 @click.option("--log-level", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"]), 
               default="INFO")
-def main(filename, log_level):
+@click.option("--use-api-key", is_flag=True, default=False)
+def main(filename, log_level, use_api_key):
     result_backup = "data/challenge_scores.pickle"
     result_filename = "data/challenge_scores_final.csv" 
     id_string = "OpenAlexID (as URL)"
@@ -28,12 +29,17 @@ def main(filename, log_level):
     abstract_string = "Abstract"
     logger.setLevel(log_level.upper())
 
+    if use_api_key:
+        with open("openalex_api_key.txt", "r") as f:
+            api_key = f.read().strip()
+    else:
+        api_key = None
 
     logger.info(f"Starting score calculation script... reading input file {filename}")
     df = pd.read_csv(filename)
     logging.info(f"Read {len(df)} rows from input file.") 
 
-    evaluator = Evaluator(online=False) 
+    evaluator = Evaluator(online=False, api_key=api_key) 
     logging.debug("Evaluator initialized.")
 
     if Path(result_backup).exists():
