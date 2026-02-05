@@ -127,6 +127,7 @@ def process_id(id_number, session_id):
 
 # Create Gradio interface
 with gr.Blocks(title="TRUST Score Calculator") as demo:
+    
     gr.Markdown("""
     # 🤖 TRUST Score Calculator
     
@@ -197,4 +198,10 @@ if __name__ == "__main__":
     demo.queue(
         max_size=10            # prevents overload
     )
-    demo.launch()
+    CSS_STRING = """
+    .gradio-container {
+        overflow-y: auto !important;
+        height: auto !important;
+    }
+    """
+    demo.launch(css=CSS_STRING)
