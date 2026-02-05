@@ -1,6 +1,8 @@
 import logging 
 import pickle 
 from pathlib import Path
+
+import click 
 import pandas as pd 
 import tqdm
 
@@ -13,14 +15,17 @@ formatter = logging.Formatter("[%(levelname)s (%(module)s)] %(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-def main():
-    filename = "data/challenge_data.csv"
+@click.command()
+@click.argument("filename", type=click.Path(exists=True), default="data/challenge_data.csv")
+@click.option("--log-level", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"]), 
+              default="INFO")
+def main(filename, log_level):
     result_backup = "data/challenge_scores.pickle"
     result_filename = "data/challenge_scores_final.csv" 
     id_string = "OpenAlexID (as URL)"
     title_string = "Title"
     abstract_string = "Abstract"
-    logger.setLevel(logging.INFO)
+    logger.setLevel(log_level.upper())
 
 
     logger.info(f"Starting score calculation script... reading input file {filename}")
