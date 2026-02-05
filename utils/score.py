@@ -289,7 +289,7 @@ class Evaluator():
             ):
                 pass # we have to skipp all intermediate results
             paper.ref_embeddings = result
-            seff.ref_embeddings_cache[paper.openalexid] = result 
+            self.ref_embeddings_cache[paper.openalexid] = result 
 
         if paper.embedding is None or paper.ref_embeddings is None:
             paper.status = "Error during embedding calculation."
