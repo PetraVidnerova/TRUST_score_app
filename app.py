@@ -1,4 +1,7 @@
 import time
+import numpy as np
+import pandas as pd
+from requests import options 
 import gradio as gr
     
 from utils import download_paper_data, download_titles_and_abstracts, calculate_score
@@ -9,27 +12,9 @@ user_last_request = {} # to track last request time per user
 
 model = Embeddings()
 
-def fetch_data_from_api(id_number):
-    """
-    Fetch data from a public API based on ID number.
-    Using JSONPlaceholder as an example public API.
-    """
-    # try:
-    #     # Using JSONPlaceholder API as an example
-    #     url = f"https://jsonplaceholder.typicode.com/posts/{id_number}"
-    #     response = requests.get(url, timeout=10)
-    #     response.raise_for_status()
-    #     data = response.json()
-    #     return data
-    # except requests.RequestException as e:
-    #     return {"error": f"Failed to fetch data: {str(e)}"}
-    return {
-        "id": id_number, 
-        "score": 75.0
-    }
 
-
-
+def wraper_fuc(choice_key, session_id):
+    yield from process_id(choice_collection[choice_key], session_id)
 
 def process_id(id_number, session_id):
     """
@@ -42,22 +27,23 @@ def process_id(id_number, session_id):
         raise gr.Error(f"⏱ Please wait {int(COOLDOWN_SECONDS - (now - last_time))}s before submitting again.")
     user_last_request[session_id] = now
 
+    no_df = pd.DataFrame(columns=["Score", "Raw value", "Normalized value"])
+    
     if not id_number:
-        yield "💀 Please enter an ID number", "", 0.0, None
+        yield "💀 Please enter an ID number", "", no_df
         return 
     if not id_number.startswith("W"):
-        yield "💀 Please enter a valid OpenAlex ID starting with 'W'", "", 0.0, None
+        yield "💀 Please enter a valid OpenAlex ID starting with 'W'", "", no_df
         return 
-    
     # Step 1: Fetch data from API
     status = "Fetching paper metadata from API... may take a while."
-    yield status, "", None, None  
+    yield status, "", no_df
     data = download_paper_data(id_number)
     
     #print("Data fetched:", data)
 
     if "error" in data:
-        yield f"☠️ Error: {data['error']}", "", 0.0, None
+        yield f"☠️ Error: {data['error']}", "",  no_df
         return
 
     # Prepare output
@@ -81,10 +67,10 @@ def process_id(id_number, session_id):
         result_message = None
     
     if result_message is not None:
-        yield result_message, api_data_display, 0.0, None
+        yield result_message, api_data_display, no_df
         return
     else:
-        yield "✅ Now we will process referenced works...", api_data_display, None, None
+        yield "✅ Now we will process referenced works...", api_data_display, no_df
 
     title = data["title"]
     abstract = data["abstract"]
@@ -95,74 +81,115 @@ def process_id(id_number, session_id):
         titles_abstracts.append(item)
         i += 1
         if i % 10 == 0:
-            yield f"❯❯❯❯ Now we will process referenced works... ({i}/{len(data.get('referenced_works', []))} processed)", api_data_display, None, None  
+            yield f"❯❯❯❯ Now we will process referenced works... ({i}/{len(data.get('referenced_works', []))} processed)", api_data_display, no_df
+
    
     if len(titles_abstracts) == 0:
         result_message = "⚠️ No valid referenced works found. Score cannot be calculated."
-        yield result_message, api_data_display, 0.0, None
+        yield result_message, api_data_display,  no_df
         return 
         
-    yield "✅ Referenced works processed successfully. Now calculating the embeddings... be patient ⌛", api_data_display, None, None
+    yield "✅ Referenced works processed successfully. Now calculating the embeddings... be patient ⌛", api_data_display, no_df
 
     for result in model.embed([(title, abstract)], titles_only=False):
         paper_embedding = result
-    yield "Calculating embeddings for referenced works... now be really patient ⌛⌛⌛", api_data_display, None , None
+    yield "Calculating embeddings for referenced works... now be really patient ⌛⌛⌛", api_data_display, no_df
     for result in model.embed(titles_abstracts, titles_only=False):
         if isinstance(result, str):
-            yield result, api_data_display, None    , None
+            yield result, api_data_display, no_df
         else:
             ref_embeddings = result
 
-    yield "Calculating the final score...", api_data_display, None, None
+    yield "Calculating the final score...", api_data_display, no_df
     score1 = calculate_score(paper_embedding, ref_embeddings)
     score2 = calculate_score(None, ref_embeddings)
-    score = (score1 * score2) / (score1 + score2)
-    normalized_score = (score - 0.01) / (0.1 - 0.01) # todo adjust min/max based on real data
+    #score = (score1 * score2) / (score1 + score2)
+    score = score1
+    normalized_score1 = (score1 - 0.01) / (0.1 - 0.01) # todo adjust min/max based on real data
+    normalized_score2 = (score2 - 0.01) / (0.1 - 0.01) # todo adjust min/max based on real data
+    combined_score =  np.sqrt(score1 * score2) if score1 > 0 and score2 > 0 else 0
+    normalized_combined_score = (combined_score - 0.01) / (0.1 - 0.01) # todo adjust min/max based on real data
     time.sleep(0.5)
+
+    score_df = pd.DataFrame([
+        {"Score": "Score paper-ref", "Raw value": score1, "Normalized value": normalized_score1},
+        {"Score": "Score ref-ref", "Raw value": score2, "Normalized value": normalized_score2},
+        {"Score": "Combined Score", "Raw value": combined_score, "Normalized value": normalized_combined_score}
+    ])
+
 
     result_message = f"🎉 Processing complete! Score calculated successfully."
     
-    yield result_message, api_data_display, score, normalized_score 
+    yield result_message, api_data_display, score_df
 
+with open("texts/intro.md", "r") as f:
+    intro_markdown = f.read()
 
 # Create Gradio interface
 with gr.Blocks(title="TRUST Score Calculator") as demo:
     
-    gr.Markdown("""
-    # 🤖 TRUST Score Calculator
+    gr.Markdown(intro_markdown)
     
-    Please use this app only if you have a real reason and for research purposes.
-    This app is intended only for demnonstration, if you need to calculate scores for more papers,
-                please download our script from GitHub and run it locally or on your computer. Using
-                GPU is highly recommended, also having API key for OpenAlex will help and speed up
-                the data fetching.                
-    Enter a valid OpenAlex ID.
-                
-    Made by Petra Vidnerová (petra@cs.cas.cz) as part of the TRUST project. 
-    Thanks also to the authors of the **specter2** model.
-    """)
     session_state = gr.State() 
 
-    with gr.Row():
-        with gr.Column():
-            id_input = gr.Textbox(
-                label="Enter OpenAlex ID (e.g. W3081305497)", 
-                placeholder="e.g., W3081305497",
-                lines=1
-            )
-            submit_btn = gr.Button("Calculate Score", variant="primary")
-        
-        with gr.Column():
-            score_output = gr.Number(
-                label="Calculated Raw Score",
-                precision=6
-            )
+    choice_collection = {
+        "Attention is all you need": "W2626778328",
+        "NAS-Bench": "W3081305497",
+        "Sensor Data Air Pollution": "W2498521749"
+    }
 
-        with gr.Column():
-            normalized_output = gr.Number(
-                label="Normalized Score (0-1)",
-                precision=6
-            )
+    with gr.Row():
+        with gr.Column(scale=2):
+            with gr.Row():
+                id_input = gr.Textbox(
+                    label="Enter OpenAlex ID (e.g. W3081305497)", 
+                    placeholder="e.g., W3081305497",
+                    lines=1
+                )
+                submit_btn = gr.Button("Calculate Score", variant="primary")
+            with gr.Row():
+                gr.Markdown("""
+                Or pick an example ID:
+                """)
+            with gr.Row():
+                id_input_alt = gr.Dropdown(
+                    choices=list(choice_collection.keys()),
+                    label="Pick a fruit"
+                )
+                go_btn = gr.Button("Go!")  
+
+        with gr.Column(scale=2):
+
+            df = gr.DataFrame(
+                headers=["Score", "Raw value", "Normalized value"],
+                label="Score Outputs"
+            )  
+            # )
+            # with gr.Row():
+            #     with gr.Column():
+            #         score_output = gr.Number(
+            #             label="Calculated Raw Score",
+            #             precision=6
+            #         )   
+
+            #     with gr.Column():
+            #         normalized_output = gr.Number(
+            #             label="Normalized Score (0-1)",
+            #             precision=6
+            #         )
+            # with gr.Row():
+            #     with gr.Column():
+            #         score2_output = gr.Number(
+            #             label="Calculated Raw Score",
+            #             precision=6
+            #         )   
+
+            #     with gr.Column():
+            #         normalized_output2 = gr.Number(
+            #             label="Normalized Score (0-1)",
+            #             precision=6
+            #         )
+
 
     status_output = gr.Textbox(
         label="Status",
@@ -177,15 +204,22 @@ with gr.Blocks(title="TRUST Score Calculator") as demo:
     submit_btn.click(
         fn=process_id,
         inputs=[id_input, session_state],
-        outputs=[status_output, api_data_output, score_output, normalized_output]
+        outputs=[status_output, api_data_output, df]
     )
-    
+
+    go_btn.click(
+        fn=wraper_fuc,
+        inputs=[id_input_alt, session_state],
+        outputs=[status_output, api_data_output, df]
+    )
+
     # Also allow Enter key to submit
     id_input.submit(
         fn=process_id,
         inputs=[id_input, session_state],
-        outputs=[status_output, api_data_output, score_output, normalized_output]
+        outputs=[status_output, api_data_output, df]
     )
+
     
     gr.Markdown("""
     ---
@@ -204,4 +238,5 @@ if __name__ == "__main__":
         height: auto !important;
     }
     """
-    demo.launch(css=CSS_STRING)
+    #demo.launch(css=CSS_STRING)
+    demo.launch()

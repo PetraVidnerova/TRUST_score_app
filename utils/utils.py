@@ -82,10 +82,17 @@ def calculate_score(paper_embedding, ref_embeddings):
         return 0.0
     if paper_embedding is None:
         paper_embedding = ref_embeddings.mean(axis=0).unsqueeze(0)
-    similarities = torch.nn.functional.cosine_similarity(
-        paper_embedding,
-        ref_embeddings,
-        dim=1
-    )
-    score = similarities.mean().item()
+    
+    paper_normed = torch.nn.functional.normalize(paper_embedding, p=2, dim=1)   # (1, n)
+    ref_normed = torch.nn.functional.normalize(ref_embeddings, p=2, dim=1)   # (m, n)
+
+    cosine_sim_matrix = ref_normed @ paper_normed.T   # (m, 1)
+    score = cosine_sim_matrix.flatten().mean().item()
+
+    # similarities = torch.nn.functional.cosine_similarity(
+    #     paper_embedding,
+    #     ref_embeddings,
+    #     dim=1
+    # )
+    # score = similarities.mean().item()
     return 1.0 - score
