@@ -71,7 +71,7 @@ class Embeddings():
                 for title, abstract in titles_abstracts
             ]
 
-        batchsize = 64
+        batchsize = 8
         batches = [
             text_batch[i:i+batchsize]
             for i in range(0, len(text_batch), batchsize)

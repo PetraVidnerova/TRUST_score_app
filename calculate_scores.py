@@ -20,7 +20,8 @@ logger.addHandler(handler)
 @click.option("--log-level", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"]), 
               default="INFO")
 @click.option("--use-api-key", is_flag=True, default=False)
-def main(filename, log_level, use_api_key):
+@click.option("--force-cpu", is_flag=True, default=False)
+def main(filename, log_level, use_api_key, force_cpu):
     result_backup = "data/challenge_scores.pickle"
     result_filename = "data/challenge_scores_final.csv" 
     id_string = "OpenAlexID (as URL)"
@@ -39,7 +40,7 @@ def main(filename, log_level, use_api_key):
     df = pd.read_csv(filename)
     logging.info(f"Read {len(df)} rows from input file.") 
 
-    evaluator = Evaluator(online=False, api_key=api_key) 
+    evaluator = Evaluator(online=False, api_key=api_key, force_cpu=force_cpu) 
     logging.debug("Evaluator initialized.")
 
     if Path(result_backup).exists():

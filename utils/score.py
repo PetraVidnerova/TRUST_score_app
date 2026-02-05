@@ -2,7 +2,7 @@ import logging
 import pickle
 from pathlib import Path
 
-from torch import cosine_similarity
+from torch.nn.functional import cosine_similarity as cosine_similarity
 from utils.embeddings import Embeddings
 from utils.utils import download_paper_data, send_request, eat_prefix, create_abstract
 
@@ -56,11 +56,13 @@ class Score():
     
 class Evaluator():
 
-    def __init__(self, online:bool=False, api_key:str=None):
+    def __init__(self, online:bool=False, api_key:str=None,
+                 force_cpu:bool=False):
         """ Load saved data if their exists and we are not online. """
         self.online = online
         self.api_key = api_key
-        self.embeddings_model = Embeddings()
+        self.embeddings_model = Embeddings(
+            device="cpu" if force_cpu else "auto")
 
         self.titles_cache = {} # openalexid -> title
         self.abstracts_cache = {} # openalexid -> abstract
@@ -155,7 +157,7 @@ class Evaluator():
     
     def fetch_ref_data_batched(self, paper:Paper):
         if not self.api_key:
-            return fetch_ref_data(self, paper)
+            return self.fetch_ref_data(paper)
         
         batch_size = 10
         to_process = [] # papes that has to be fetched
