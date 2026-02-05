@@ -5,13 +5,14 @@ from requests import options
 import gradio as gr
     
 from utils.utils import download_paper_data, download_titles_and_abstracts, calculate_score
+from utils.score import Evaluator
 from utils.embeddings import Embeddings
 
 COOLDOWN_SECONDS = 10   
 user_last_request = {} # to track last request time per user
 
+evaluator = Evaluator(online=True)
 model = Embeddings()
-
 
 def wraper_fuc(choice_key, session_id):
     yield from process_id(choice_collection[choice_key], session_id)
@@ -133,9 +134,9 @@ with gr.Blocks(title="TRUST Score Calculator") as demo:
     session_state = gr.State() 
 
     choice_collection = {
-        "Attention is all you need": "W2626778328",
-        "NAS-Bench": "W3081305497",
-        "Sensor Data Air Pollution": "W2498521749"
+        "🍎 Attention is all you need": "W2626778328",
+        "🍏 NAS-Bench": "W3081305497",
+        "🍋 Sensor Data Air Pollution": "W2498521749"
     }
 
     with gr.Row():
