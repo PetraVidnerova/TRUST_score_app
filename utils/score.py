@@ -106,7 +106,7 @@ class Evaluator():
             pickle.dump(self.paper_embeddings_cache, f)
         with open("ref_embeddings_cache.pickle", "wb") as f:
             pickle.dump(self.ref_embeddings_cache, f)
-        logging.debug("Cache saved successfully.")
+        logger.debug("Cache saved successfully.")
 
     def fetch_paper_data(self, paper:Paper):
         """ Fetch paper data from OpenAlex API.
