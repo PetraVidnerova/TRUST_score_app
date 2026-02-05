@@ -1,0 +1,12 @@
+[project]
+name = "trust-score-app"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "adapters>=1.2.0",
+    "click>=8.3.1",
+    "pandas>=3.0.0",
+    "tenacity>=9.1.3",
+]

@@ -20,7 +20,7 @@ class Embeddings():
     def __init__(self):
 
         self.tokenizer = AutoTokenizer.from_pretrained('allenai/specter2_base')
-        self.model = AutoAdapterModel.from_pretrained('allenai/specter2_base', device_map="cpu")
+        self.model = AutoAdapterModel.from_pretrained('allenai/specter2_base', device_map="auto")
         self.model.load_adapter("allenai/specter2",
                                 source="hf",
                                 load_as="specter2",
@@ -71,7 +71,7 @@ class Embeddings():
                 for title, abstract in titles_abstracts
             ]
 
-        batchsize = 4
+        batchsize = 64
         batches = [
             text_batch[i:i+batchsize]
             for i in range(0, len(text_batch), batchsize)

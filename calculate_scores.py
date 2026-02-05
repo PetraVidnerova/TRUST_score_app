@@ -23,6 +23,7 @@ def main(filename, log_level):
     result_backup = "data/challenge_scores.pickle"
     result_filename = "data/challenge_scores_final.csv" 
     id_string = "OpenAlexID (as URL)"
+    paper_id = "PaperProjectID" 
     title_string = "Title"
     abstract_string = "Abstract"
     logger.setLevel(log_level.upper())
@@ -44,13 +45,17 @@ def main(filename, log_level):
 
 
     for index, row in tqdm.tqdm(df.iterrows(), total=len(df)):
+        pid = row[paper_id]
+        if pid in results:
+            continue
         logging.debug(f"Evaluating row {index} with OpenAlex ID {row[id_string]}")
         openalex_id = eat_prefix(row[id_string])
         scores = evaluator.eval_paper(openalex_id, 
                                       title=row.get(title_string, None), 
                                       abstract=row.get(abstract_string, None))
         print(f"Row {index} - OpenAlex ID: {openalex_id} - Scores: {scores}")
-
+        results[pid] = scores 
+        
         if index % 10 == 0:
             with open(result_backup, "wb") as f:
                 pickle.dump(results, f)
