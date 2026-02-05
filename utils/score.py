@@ -150,6 +150,7 @@ class Evaluator():
             paper.references = data.get("referenced_works", [])
             if len(paper.references) == 0:
                 paper.status = "No references found."
+            self.ref_data_cache[paper.openalexid] = paper.references
 
         return paper 
     
@@ -276,7 +277,8 @@ class Evaluator():
                 titles_only=paper.titles_only
             ):
                 pass # we have to skipp all intermediate results
-            paper.embedding = result 
+            paper.embedding = result
+            self.paper_embeddings_cache[paper.openalexid] = result 
 
         if paper.ref_embeddings is None:
             for result in self.embeddings_model.embed(
@@ -285,6 +287,7 @@ class Evaluator():
             ):
                 pass # we have to skipp all intermediate results
             paper.ref_embeddings = result
+            seff.ref_embeddings_cache[paper.openalexid] = result 
 
         if paper.embedding is None or paper.ref_embeddings is None:
             paper.status = "Error during embedding calculation."
