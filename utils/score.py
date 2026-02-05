@@ -119,11 +119,13 @@ class Evaluator():
         if paper.title is None:
             if paper.openalexid in self.titles_cache:
                 paper.title = self.titles_cache[paper.openalexid]
+                assert paper.title is not None
             else:
                 select_fields.append("title")
         if paper.abstract is None:
             if paper.openalexid in self.abstracts_cache:
                 paper.abstract = self.abstracts_cache[paper.openalexid]
+                assert isinstance(paper.abstract, str)
             else:
                 select_fields.append("abstract_inverted_index")
         if paper.openalexid in self.ref_data_cache:
@@ -145,7 +147,7 @@ class Evaluator():
         
             if paper.abstract is None:
                 paper.abstract = data.get("abstract", None)
-                if paper.abstract is None:
+                if paper.abstract is None or not isinstance(abstract, str):
                     paper.titles_only = True
                     logger.warning(f"Abstract not found for paper {paper.openalexid}. Will calculate score based on titles only.")
     
@@ -207,18 +209,18 @@ class Evaluator():
         if not paper.titles_only:
             have_abstract = 0
             for _, abstract in paper.ref_data:
-                if abstract is not None:
+                if abstract is not None and isinstance(abstract, str):
                     have_abstract += 1
                     
             if have_abstract < 5:
                 paper.titles_only = True
                 logger.warning(f"Not enough abstracts found for references of paper {paper.openalexid}. Will calculate score based on titles only.")
-                paper.ref_data = [(title, None) for title, _ in paper.ref_data]
+                paper.ref_data = [(title, None) for title, _ in paper.ref_data if title is not None]
             else:
                 paper.ref_data = [
                     (title, abstract)
                     for title, abstract in paper.ref_data
-                    if abstract is not None
+                    if title is not None and abstract is not None and isinstance(abstract, str)
                 ]
         return paper
     
@@ -320,7 +322,10 @@ class Evaluator():
         if paper.status != "OK":
             return self.return_dummy_scores(paper)
         logger.debug(f"Paper data fetched successfully for {openalexid}. Title: {paper.title}, Abstract: {'Yes' if paper.abstract else 'No'}, Number of references: {len(paper.references)}")
-
+        assert isinstance(paper.title, str)
+        if not paper.titles_only:
+            assert isinstance(paper.abstract, str)
+        
         paper = self.fetch_ref_data_batched(paper) 
         logger.debug(f"Paper status after fetching data: {paper.status}.")
         if paper.status != "OK":

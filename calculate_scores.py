@@ -57,9 +57,15 @@ def main(filename, log_level, use_api_key, force_cpu):
             continue
         logging.debug(f"Evaluating row {index} with OpenAlex ID {row[id_string]}")
         openalex_id = eat_prefix(row[id_string])
+        title = row.get(title_string, None)
+        if title is not None and not isinstance(title, str):
+            title = None
+        abstract = row.get(abstract_string, None)
+        if abstract is not None and not isinstance(abstract, str):
+            abstract = None
         scores = evaluator.eval_paper(openalex_id, 
-                                      title=row.get(title_string, None), 
-                                      abstract=row.get(abstract_string, None))
+                                      title=title, 
+                                      abstract=abstract)
         print(f"Row {index} - OpenAlex ID: {openalex_id} - Scores: {scores}")
         results[pid] = scores 
         

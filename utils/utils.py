@@ -57,7 +57,7 @@ def download_paper_data(alexid, select: str):
         return 
     
     if "abstract_inverted_index" in data:
-        if data["abstract_inverted_index"] is not None:
+        if data["abstract_inverted_index"]:
             data["abstract"] = create_abstract(data["abstract_inverted_index"])
             del data["abstract_inverted_index"]
         else:
