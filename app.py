@@ -12,8 +12,11 @@ user_last_request = {} # to track last request time per user
 
 evaluator = Evaluator(online=True)
 
-def wraper_fuc(choice_key, session_id):
-    yield from process_id(choice_collection[choice_key], session_id)
+def wrapper_func(work_id, choice_key, session_id):
+    if work_id and work_id.strip() != "":
+        yield from process_id(work_id.strip(), session_id)
+    else:
+        yield from process_id(choice_collection[choice_key], session_id)
 
 def process_id(id_number, session_id):
     """
@@ -134,6 +137,7 @@ with gr.Blocks(title="TRUST Score Calculator") as demo:
     session_state = gr.State() 
 
     choice_collection = {
+        " --- ": "", 
         "🍎 Attention is all you need": "W2626778328",
         "🍏 NAS-Bench": "W3081305497",
         "🍋 Sensor Data Air Pollution": "W2498521749"
@@ -148,17 +152,14 @@ with gr.Blocks(title="TRUST Score Calculator") as demo:
                     lines=1,
                     scale=3
                 )
-                submit_btn = gr.Button("Calculate Score", variant="primary", scale=1)
-            with gr.Row():
-                gr.Markdown("""
-                Or pick an example ID:
-                """)
             with gr.Row():
                 id_input_alt = gr.Dropdown(
                     choices=list(choice_collection.keys()),
-                    label="Pick a fruit", scale=3
+                    label="... or pick a fruit", scale=3
                 )
-                go_btn = gr.Button("Go!", scale=1)  
+            with gr.Row():
+                #go_btn = gr.Button("Go!", scale=1)  
+                submit_btn = gr.Button("Calculate Score", variant="primary", scale=1)
 
         with gr.Column(scale=2):
 
@@ -179,16 +180,11 @@ with gr.Blocks(title="TRUST Score Calculator") as demo:
     
     # Set up the event handler
     submit_btn.click(
-        fn=process_id,
-        inputs=[id_input, session_state],
+        fn=wrapper_func,
+        inputs=[id_input, id_input_alt, session_state],
         outputs=[status_output, api_data_output, df]
     )
 
-    go_btn.click(
-        fn=wraper_fuc,
-        inputs=[id_input_alt, session_state],
-        outputs=[status_output, api_data_output, df]
-    )
 
     # Also allow Enter key to submit
     id_input.submit(
