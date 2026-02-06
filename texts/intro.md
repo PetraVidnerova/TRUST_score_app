@@ -1,5 +1,5 @@
 # 📜 TRUST Score Calculator 
-<img src="/file=img/logo.png" width="400px" align="right"/>
+<img src="http://www.cs.cas.cz/~petra/trust/logo.png" width="400px" align="right"/>
 
 Please use this app only if you have a real reason and for research purposes so you do not overload the server.
     

@@ -5,14 +5,12 @@ from requests import options
 import gradio as gr
     
 from utils.utils import download_paper_data, download_titles_and_abstracts, calculate_score
-from utils.score import Evaluator
-from utils.embeddings import Embeddings
+from utils.score import Evaluator, Paper, Score
 
 COOLDOWN_SECONDS = 10   
 user_last_request = {} # to track last request time per user
 
 evaluator = Evaluator(online=True)
-model = Embeddings()
 
 def wraper_fuc(choice_key, session_id):
     yield from process_id(choice_collection[choice_key], session_id)
@@ -29,99 +27,101 @@ def process_id(id_number, session_id):
     user_last_request[session_id] = now
 
     no_df = pd.DataFrame(columns=["Score", "Raw value", "Normalized value"])
-    
+
+    status_message = ""  
     if not id_number:
-        yield "💀 Please enter an ID number", "", no_df
+        status_message += "💀 Please enter an ID number \n"
+        yield status_message, "", no_df
         return 
     if not id_number.startswith("W"):
-        yield "💀 Please enter a valid OpenAlex ID starting with 'W'", "", no_df
+        status_message += "💀 Please enter a valid OpenAlex ID starting with 'W' \n"
+        yield status_message, "", no_df
         return 
+    
     # Step 1: Fetch data from API
-    status = "Fetching paper metadata from API... may take a while."
-    yield status, "", no_df
-    data = download_paper_data(id_number)
+    status_message += "Fetching paper metadata from API... may take a while. \n"
+    yield status_message, "", no_df
+
+    paper = Paper(id_number)
+    paper = evaluator.fetch_paper_data(paper)
     
-    #print("Data fetched:", data)
+    if paper.status != "OK":
+        status_message += "☠️ Error fetching paper metadata. Please check the OpenAlex ID and try again.\n"
+        yield status_message, "", no_df
+        return  
 
-    if "error" in data:
-        yield f"☠️ Error: {data['error']}", "",  no_df
-        return
-
-    # Prepare output
     api_data_display = f"""
-**API Data Retrieved:**
+  **API Data Retrieved:**
 
-  **Title:** {data.get('title', 'N/A')}
+  **Title:** {paper.title if paper.title is not None else 'N/A'}
 
-  **Abstract:** {data.get('abstract', 'N/A')[:300] + '...'}
+  **Abstract:** {paper.abstract[:300] + '...' if paper.abstract is not None else 'N/A'}
 
-  **Referenced Works:** {len(data.get('referenced_works', []))}
+  **Referenced Works:** {len(paper.references) if paper.references is not None else 'N/A'}
 """
-    
-    if "title" not in data:
-        result_message = "⚠️ No title found in the API data. Score cannot be calculated."
-    elif "abstract" not in data or data["abstract"] is None:
-        result_message = "⚠️ No abstract found in the API data. Score cannot be calculated."
-    elif len(data.get("referenced_works", [])) == 0:
-        result_message = "⚠️ No referenced works found in the API data. Score cannot be calculated."
-    else:
-        result_message = None
-    
-    if result_message is not None:
-        yield result_message, api_data_display, no_df
-        return
-    else:
-        yield "✅ Now we will process referenced works...", api_data_display, no_df
 
-    title = data["title"]
-    abstract = data["abstract"]
+    status_message += "✅ Paper metadata fetched successfully. Now processing...\n"
+    yield status_message, api_data_display, no_df
 
-    titles_abstracts = []
-    i = 0 
-    for item in download_titles_and_abstracts(data.get("referenced_works", [])):
-        titles_abstracts.append(item)
+    # Step 2: Process referenced works (fetch titles and abstracts)         
+    status_message += "Fetching referenced works data... this may take a while depending on the number of references.\n" 
+    yield status_message, api_data_display, no_df 
+    
+    i = 0
+    process_status = ""
+    for paper in evaluator.fetch_ref_data(paper):
         i += 1
         if i % 10 == 0:
-            yield f"❯❯❯❯ Now we will process referenced works... ({i}/{len(data.get('referenced_works', []))} processed)", api_data_display, no_df
-
-   
-    if len(titles_abstracts) == 0:
-        result_message = "⚠️ No valid referenced works found. Score cannot be calculated."
-        yield result_message, api_data_display,  no_df
-        return 
+            process_status = f"⏳ Referenced works processed: {i}/{len(paper.references)} \n"
+            yield status_message + process_status, api_data_display, no_df
+    status_message += process_status
         
-    yield "✅ Referenced works processed successfully. Now calculating the embeddings... be patient ⌛", api_data_display, no_df
+    if paper.status != "OK":
+        status_message += f"☠️ {paper.status} Cannot proceed further.\n"
+        yield status_message, api_data_display, no_df
+        return
+    
+    status_message += "✅ Referenced works data fetched successfully. Now calculating embeddings...\n"
+    yield status_message, api_data_display, no_df
 
-    for result in model.embed([(title, abstract)], titles_only=False):
-        paper_embedding = result
-    yield "Calculating embeddings for referenced works... now be really patient ⌛⌛⌛", api_data_display, no_df
-    for result in model.embed(titles_abstracts, titles_only=False):
-        if isinstance(result, str):
-            yield result, api_data_display, no_df
-        else:
-            ref_embeddings = result
+    # Step 3: Calculate embeddings 
+    status_message += "Calculating embeddings for the paper and its references... please be patient ⌛\n"
+    yield status_message, api_data_display, no_df
+    for status in evaluator.calculate_embeddings(paper):
+        yield status_message + status, api_data_display, no_df
+    status_message += status
 
-    yield "Calculating the final score...", api_data_display, no_df
-    score1 = calculate_score(paper_embedding, ref_embeddings)
-    score2 = calculate_score(None, ref_embeddings)
-    #score = (score1 * score2) / (score1 + score2)
-    score = score1
-    normalized_score1 = (score1 - 0.01) / (0.1 - 0.01) # todo adjust min/max based on real data
-    normalized_score2 = (score2 - 0.01) / (0.1 - 0.01) # todo adjust min/max based on real data
-    combined_score =  np.sqrt(score1 * score2) if score1 > 0 and score2 > 0 else 0
-    normalized_combined_score = (combined_score - 0.01) / (0.1 - 0.01) # todo adjust min/max based on real data
+    if paper.status != "OK":
+        status_message += "☠️ Error calculating embeddings. Cannot proceed further.\n"
+        yield status_message, api_data_display, no_df
+        return
+    
+    status_message += "✅ Embeddings calculated successfully. Now evaluating the score...\n"
+    yield status_message, api_data_display, no_df
+
+
+    score = Score()
+        
+    result = {}
+    result["paper_ref"] = score.eval_paper_ref_dissimilarity(paper)
+    result["ref_ref"] = score.eval_ref_ref_dissimilarity(paper)
+    result["ref_spread"] = score.eval_ref_spread(paper)  
+
+    status_message += "✅ Score evaluation complete!\n"
+    yield status_message, api_data_display, no_df
+
     time.sleep(0.5)
 
     score_df = pd.DataFrame([
-        {"Score": "Score paper-ref", "Raw value": score1, "Normalized value": normalized_score1},
-        {"Score": "Score ref-ref", "Raw value": score2, "Normalized value": normalized_score2},
-        {"Score": "Combined Score", "Raw value": combined_score, "Normalized value": normalized_combined_score}
+        {"Score": "Score paper-ref", "Raw value": result["paper_ref"], "Normalized value": None},
+        {"Score": "Score ref-ref", "Raw value": result["ref_ref"], "Normalized value": None},
+        {"Score": "Score ref-std", "Raw value": result["ref_spread"], "Normalized value": None}
     ])
 
 
     result_message = f"🎉 Processing complete! Score calculated successfully."
     
-    yield result_message, api_data_display, score_df
+    yield status_message + result_message, api_data_display, score_df
 
 with open("texts/intro.md", "r") as f:
     intro_markdown = f.read()
@@ -145,9 +145,10 @@ with gr.Blocks(title="TRUST Score Calculator") as demo:
                 id_input = gr.Textbox(
                     label="Enter OpenAlex ID (e.g. W3081305497)", 
                     placeholder="e.g., W3081305497",
-                    lines=1
+                    lines=1,
+                    scale=3
                 )
-                submit_btn = gr.Button("Calculate Score", variant="primary")
+                submit_btn = gr.Button("Calculate Score", variant="primary", scale=1)
             with gr.Row():
                 gr.Markdown("""
                 Or pick an example ID:
@@ -155,9 +156,9 @@ with gr.Blocks(title="TRUST Score Calculator") as demo:
             with gr.Row():
                 id_input_alt = gr.Dropdown(
                     choices=list(choice_collection.keys()),
-                    label="Pick a fruit"
+                    label="Pick a fruit", scale=3
                 )
-                go_btn = gr.Button("Go!")  
+                go_btn = gr.Button("Go!", scale=1)  
 
         with gr.Column(scale=2):
 
@@ -165,31 +166,6 @@ with gr.Blocks(title="TRUST Score Calculator") as demo:
                 headers=["Score", "Raw value", "Normalized value"],
                 label="Score Outputs"
             )  
-            # )
-            # with gr.Row():
-            #     with gr.Column():
-            #         score_output = gr.Number(
-            #             label="Calculated Raw Score",
-            #             precision=6
-            #         )   
-
-            #     with gr.Column():
-            #         normalized_output = gr.Number(
-            #             label="Normalized Score (0-1)",
-            #             precision=6
-            #         )
-            # with gr.Row():
-            #     with gr.Column():
-            #         score2_output = gr.Number(
-            #             label="Calculated Raw Score",
-            #             precision=6
-            #         )   
-
-            #     with gr.Column():
-            #         normalized_output2 = gr.Number(
-            #             label="Normalized Score (0-1)",
-            #             precision=6
-            #         )
 
 
     status_output = gr.Textbox(

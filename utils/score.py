@@ -61,8 +61,12 @@ class Evaluator():
         """ Load saved data if their exists and we are not online. """
         self.online = online
         self.api_key = api_key
+        batch_size = None
+        if online:
+            force_cpu = True # for online we have to use cpu, so we force it to avoid any issues with gpu memory
+            batch_size = 4 # for online we have to use smaller batch size to avoid gpu memory issues
         self.embeddings_model = Embeddings(
-            device="cpu" if force_cpu else "auto")
+            device="cpu" if force_cpu else "auto", batch_size=batch_size)
 
         self.titles_cache = {} # openalexid -> title
         self.abstracts_cache = {} # openalexid -> abstract
@@ -147,7 +151,7 @@ class Evaluator():
         
             if paper.abstract is None:
                 paper.abstract = data.get("abstract", None)
-                if paper.abstract is None or not isinstance(abstract, str):
+                if paper.abstract is None or not isinstance(paper.abstract, str):
                     paper.titles_only = True
                     logger.warning(f"Abstract not found for paper {paper.openalexid}. Will calculate score based on titles only.")
     
@@ -265,8 +269,14 @@ class Evaluator():
                 else:
                     abstract = None
             paper.ref_data.append((title, abstract))
-
-        return self.check_ref_data(paper)
+            if self.online:
+                # during oline we udpate status bar 
+                yield paper 
+        paper = self.check_ref_data(paper)
+        if self.online:
+            yield paper
+        else:
+            return paper 
     
     def calculate_embeddings(self, paper:Paper):
         # first try cache 
@@ -280,6 +290,9 @@ class Evaluator():
                 [(paper.title, paper.abstract)], 
                 titles_only=paper.titles_only
             ):
+                if self.online:
+                    if isinstance(result, str):
+                        yield result 
                 pass # we have to skipp all intermediate results
             paper.embedding = result
             self.paper_embeddings_cache[paper.openalexid] = result 
@@ -289,15 +302,22 @@ class Evaluator():
                 paper.ref_data,
                 titles_only=paper.titles_only
             ):
+                if self.online:
+                    if isinstance(result, str):
+                        yield result    
                 pass # we have to skipp all intermediate results
             paper.ref_embeddings = result
             self.ref_embeddings_cache[paper.openalexid] = result 
 
         if paper.embedding is None or paper.ref_embeddings is None:
             paper.status = "Error during embedding calculation."
-            return paper
+            if self.online:
+                yield paper.status
+            else:
+                return paper
 
-        return paper
+        if not self.online:
+            return paper
 
     def return_dummy_scores(self, paper:Paper):
         return {
