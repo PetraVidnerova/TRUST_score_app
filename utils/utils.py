@@ -40,27 +40,29 @@ def eat_prefix(alexid):
 
 def download_titles_and_abstracts(works):
     for work_id in works:
-        data = download_paper_data(work_id, include_referenced_works=False)
+        data = download_paper_data(work_id, select="title,abstract_inverted_index")
         if data is not None and "title" in data and "abstract" in data:
             yield (data["title"], data["abstract"])
 
 
-def download_paper_data(alexid, include_referenced_works=True):
+def download_paper_data(alexid, select: str):
     base_url = "https://api.openalex.org/works/"
     full_url = base_url + eat_prefix(alexid)
-    selection = "title,abstract_inverted_index"
-    if include_referenced_works:
-        selection += ",referenced_works"
     params = {
-        "select": selection
+        "select": select
     }
     timeout = 10
     data = send_request(full_url, params, timeout)
     if data is None:
-        return {"error": "Error during fetching data for given OpenAlex ID."}
-    if data["abstract_inverted_index"] is not None:
-        data["abstract"] = create_abstract(data["abstract_inverted_index"])
-        del data["abstract_inverted_index"]
+        return 
+    
+    if "abstract_inverted_index" in data:
+        if data["abstract_inverted_index"]:
+            data["abstract"] = create_abstract(data["abstract_inverted_index"])
+            del data["abstract_inverted_index"]
+        else:
+            data["abstract"] = None
+            del data["abstract_inverted_index"]
     return data
 
 def create_abstract(abstract_index):

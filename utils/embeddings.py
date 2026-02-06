@@ -17,10 +17,12 @@ def mean_pooling(model_output, attention_mask):
 
 class Embeddings():
 
-    def __init__(self):
+    def __init__(self, device="auto", batch_size=8):
+
+        self.batch_size = batch_size
 
         self.tokenizer = AutoTokenizer.from_pretrained('allenai/specter2_base')
-        self.model = AutoAdapterModel.from_pretrained('allenai/specter2_base', device_map="cpu")
+        self.model = AutoAdapterModel.from_pretrained('allenai/specter2_base', device_map=device)
         self.model.load_adapter("allenai/specter2",
                                 source="hf",
                                 load_as="specter2",
@@ -71,7 +73,7 @@ class Embeddings():
                 for title, abstract in titles_abstracts
             ]
 
-        batchsize = 4
+        batchsize = self.batch_size
         batches = [
             text_batch[i:i+batchsize]
             for i in range(0, len(text_batch), batchsize)
