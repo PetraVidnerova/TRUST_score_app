@@ -14,6 +14,7 @@ handler = logging.StreamHandler()
 formatter = logging.Formatter("[%(levelname)s (%(module)s)] %(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
+logger.propagate = False
 
 @click.command()
 @click.argument("filename", type=click.Path(exists=True), default="data/challenge_data.csv")
@@ -72,8 +73,11 @@ def main(filename, log_level, use_api_key, force_cpu):
         if index % 10 == 0:
             with open(result_backup, "wb") as f:
                 pickle.dump(results, f)
-            logging.info(f"Saved intermediate results to {result_backup} after processing {index} rows.")
-
+            logger.info(f"Saved intermediate results to {result_backup} after processing {index} rows.")
+    with open(result_backup, "wb") as f:
+        pickle.dump(results, f)
+    logger.info(f"Results saved into {result_backup}. Game over.")
+            
 if __name__ == "__main__":
     main()
 
