@@ -73,7 +73,10 @@ class Embeddings():
                 for title, abstract in titles_abstracts
             ]
 
-        batchsize = self.batch_size
+        if self.batch_size is not None:
+            batchsize = self.batch_size
+        else:
+            batchsize = 1
         batches = [
             text_batch[i:i+batchsize]
             for i in range(0, len(text_batch), batchsize)

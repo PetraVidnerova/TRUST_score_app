@@ -22,7 +22,8 @@ logger.propagate = False
               default="INFO")
 @click.option("--use-api-key", is_flag=True, default=False)
 @click.option("--force-cpu", is_flag=True, default=False)
-def main(filename, log_level, use_api_key, force_cpu):
+@click.option("--only-cached", is_flag=True, default=False, help="Only evaluate papers that have cached data available, skip others.")
+def main(filename, log_level, use_api_key, force_cpu, only_cached):
     result_backup = "data/challenge_scores.pickle"
     result_filename = "data/challenge_scores_final.csv" 
     id_string = "OpenAlexID (as URL)"
@@ -41,7 +42,8 @@ def main(filename, log_level, use_api_key, force_cpu):
     df = pd.read_csv(filename)
     logging.info(f"Read {len(df)} rows from input file.") 
 
-    evaluator = Evaluator(online=False, api_key=api_key, force_cpu=force_cpu) 
+    evaluator = Evaluator(online=False, api_key=api_key, force_cpu=force_cpu,
+                          only_cached=only_cached) 
     logging.debug("Evaluator initialized.")
 
     if Path(result_backup).exists():

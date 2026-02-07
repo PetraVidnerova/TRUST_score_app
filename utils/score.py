@@ -69,10 +69,12 @@ class Score():
 class Evaluator():
 
     def __init__(self, online:bool=False, api_key:str=None,
-                 force_cpu:bool=False):
+                 force_cpu:bool=False,
+                 only_cached:bool=False):
         """ Load saved data if their exists and we are not online. """
         self.online = online
         self.api_key = api_key
+        self.only_cached = only_cached
         batch_size = None
         if online:
             force_cpu = True # for online we have to use cpu, so we force it to avoid any issues with gpu memory
@@ -199,7 +201,7 @@ class Evaluator():
                 "filter": "openalex:" + "|".join(works),
                 "select": "id,title,abstract_inverted_index"
             }
-            data = send_request(url, params, 10)
+            data = send_request(url, params, 10, only_cached=self.only_cached)
             if data is None:
                 raise ValueError("Error during batched fetching of reference data.")
             for item in data["results"]:
@@ -263,7 +265,7 @@ class Evaluator():
                 continue 
 
             select_str = ",".join(select_fields)
-            data = download_paper_data(ref, select=select_str)   
+            data = download_paper_data(ref, select=select_str, only_cached=self.only_cached)   
             if data is None:
                 logger.warning(f"Error during fetching data for reference {ref}. Skipping this reference.")
                 continue
@@ -358,13 +360,15 @@ class Evaluator():
         if not paper.titles_only:
             assert isinstance(paper.abstract, str)
         
-        paper = self.fetch_ref_data_batched(paper) 
-        logger.debug(f"Paper status after fetching data: {paper.status}.")
+        for paper in self.fetch_ref_data_batched(paper):
+            pass   # get the last resutl  
+        logger.debug(f"Paper status after fetching reference data: {paper.status}.")
         if paper.status != "OK":
             return self.return_dummy_scores(paper)
         logger.debug(f"Reference data fetched successfully for {openalexid}. Number of valid references with data: {len(paper.ref_data)}. Titles only: {paper.titles_only}" )
 
-        paper = self.calculate_embeddings(paper)
+        for paper in self.calculate_embeddings(paper):
+            pass # get the last result
         if paper.status != "OK":
             return self.return_dummy_scores(paper)
         logger.debug(f"Embeddings calculated successfully for {openalexid}.")

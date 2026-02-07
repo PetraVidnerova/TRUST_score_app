@@ -16,7 +16,9 @@ logger = logging.getLogger("__main__")
     before_sleep=before_sleep_log(logger, logging.WARNING),
     retry_error_callback=lambda _: None
 )
-def send_request(url, params, timeout):
+def send_request(url, params, timeout, only_cached=False):
+    if only_cached:
+        return {}
     params["mailto"] = "petra@cs.cas.cz"
     response = requests.get(
         url,
@@ -45,7 +47,9 @@ def download_titles_and_abstracts(works):
             yield (data["title"], data["abstract"])
 
 
-def download_paper_data(alexid, select: str):
+def download_paper_data(alexid, select: str, only_cached=False):
+    if only_cached:
+        return {}
     base_url = "https://api.openalex.org/works/"
     full_url = base_url + eat_prefix(alexid)
     params = {
