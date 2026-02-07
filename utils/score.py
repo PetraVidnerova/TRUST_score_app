@@ -3,6 +3,7 @@ import pickle
 from pathlib import Path
 
 from torch.nn.functional import cosine_similarity as cosine_similarity
+from torch.nn.functional import normalize 
 from utils.embeddings import Embeddings
 from utils.utils import download_paper_data, send_request, eat_prefix, create_abstract
 
@@ -31,28 +32,39 @@ class Score():
         self.mean_ref = None
 
     def eval_paper_ref_dissimilarity(self, paper: Paper):
-        if self.mean_ref is None:
-            self.mean_ref = paper.ref_embeddings.mean(dim=0, keepdim=True)
-        similarity = cosine_similarity(paper.embedding, self.mean_ref)
-        return  1.0 - similarity.item()  # dis
+        #if self.mean_ref is None:
+        #    self.mean_ref = paper.ref_embeddings.mean(dim=0, keepdim=True)
+        similarity = cosine_similarity(paper.ref_embeddings, paper.embedding, dim=1)
+        return  1.0 - similarity.mean().item()  # dis
 
     def eval_ref_ref_dissimilarity(self, paper: Paper):
-        if self.mean_ref is None:
-            self.mean_ref = paper.ref_embeddings.mean(dim=0, keepdim=True)
+        #if self.mean_ref is None:
+        #    self.mean_ref = paper.ref_embeddings.mean(dim=0, keepdim=True)
         
         # compute mean similarity of references to the mean reference embedding
-        mean_sim = cosine_similarity(paper.ref_embeddings, self.mean_ref).mean()
+        #mean_sim = cosine_similarity(paper.ref_embeddings, self.mean_ref).mean()
 
-        return 1.0 - mean_sim.item()  # dissimilarity
+        # compute pairwise similarity_matrix
+        X_norm = normalize(paper.ref_embeddings, p=2, dim=1)
+        dissimilarity_matrix = 1.0 - X_norm @ X_norm.T 
+        return dissimilarity_matrix.mean().item()
+        
+        #return 1.0 - mean_sim.item()  # dissimilarity
 
     def eval_ref_spread(self, paper: Paper):
-        if self.mean_ref is None:
-            self.mean_ref = paper.ref_embeddings.mean(dim=0, keepdim=True)
+
+        # compute pairwise similarity_matrix
+        X_norm = normalize(paper.ref_embeddings, p=2, dim=1)
+        dissimilarity_matrix = 1.0 - X_norm @ X_norm.T 
+        return dissimilarity_matrix.std().item()
+       
+        # if self.mean_ref is None:
+        #     self.mean_ref = paper.ref_embeddings.mean(dim=0, keepdim=True)
         
-        # compute mean similarity of references to the mean reference embedding
-        sim = cosine_similarity(paper.ref_embeddings, self.mean_ref)
-        dist = 1.0 - sim
-        return dist.std().item()  # spread
+        # # compute mean similarity of references to the mean reference embedding
+        # sim = cosine_similarity(paper.ref_embeddings, self.mean_ref)
+        # dist = 1.0 - sim
+        # return dist.std().item()  # spread
     
 class Evaluator():
 
@@ -68,8 +80,8 @@ class Evaluator():
         self.abstracts_cache = {} # openalexid -> abstract
         self.ref_data_cache = {} # openalexid -> (list of references)
 
-        self.paper_embeddings_cache = {} # openalexid -> embedding
-        self.ref_embeddings_cache = {} # openalexid -> list of reference embeddings
+        #self.paper_embeddings_cache = {} # openalexid -> embedding
+        #self.ref_embeddings_cache = {} # openalexid -> list of reference embeddings
 
         self.load_cache()
 
@@ -87,14 +99,14 @@ class Evaluator():
             with open("ref_data_cache.pickle", "rb") as f:
                 self.ref_data_cache = pickle.load(f)
                 logger.info("Reference data cache loaded successfully.")
-        if Path("paper_embeddings_cache.pickle").exists():
-            with open("paper_embeddings_cache.pickle", "rb") as f:
-                self.paper_embeddings_cache = pickle.load(f)
-                logger.info("Paper embeddings cache loaded successfully.")
-        if Path("ref_embeddings_cache.pickle").exists():
-            with open("ref_embeddings_cache.pickle", "rb") as f:
-                self.ref_embeddings_cache = pickle.load(f)
-                logger.info("Reference embeddings cache loaded successfully.")
+        # if Path("paper_embeddings_cache.pickle").exists():
+        #     with open("paper_embeddings_cache.pickle", "rb") as f:
+        #         self.paper_embeddings_cache = pickle.load(f)
+        #         logger.info("Paper embeddings cache loaded successfully.")
+        # if Path("ref_embeddings_cache.pickle").exists():
+        #     with open("ref_embeddings_cache.pickle", "rb") as f:
+        #         self.ref_embeddings_cache = pickle.load(f)
+        #         logger.info("Reference embeddings cache loaded successfully.")
 
     def save_cache(self):
         """ Save the cache to disk. """
@@ -105,11 +117,11 @@ class Evaluator():
         with open("ref_data_cache.pickle", "wb") as f:
             pickle.dump(self.ref_data_cache, f)
         
-        with open("paper_embeddings_cache.pickle", "wb") as f:
-            pickle.dump(self.paper_embeddings_cache, f)
-        with open("ref_embeddings_cache.pickle", "wb") as f:
-            pickle.dump(self.ref_embeddings_cache, f)
-        logger.debug("Cache saved successfully.")
+        # with open("paper_embeddings_cache.pickle", "wb") as f:
+        #     pickle.dump(self.paper_embeddings_cache, f)
+        # with open("ref_embeddings_cache.pickle", "wb") as f:
+        #     pickle.dump(self.ref_embeddings_cache, f)
+        # logger.debug("Cache saved successfully.")
 
     def fetch_paper_data(self, paper:Paper):
         """ Fetch paper data from OpenAlex API.
@@ -270,10 +282,10 @@ class Evaluator():
     
     def calculate_embeddings(self, paper:Paper):
         # first try cache 
-        if paper.openalexid in self.paper_embeddings_cache:
-            paper.embedding = self.paper_embeddings_cache[paper.openalexid]
-        if paper.openalexid in self.ref_embeddings_cache:
-            paper.ref_embeddings = self.ref_embeddings_cache[paper.openalexid]
+        # if paper.openalexid in self.paper_embeddings_cache:
+        #     paper.embedding = self.paper_embeddings_cache[paper.openalexid]
+        # if paper.openalexid in self.ref_embeddings_cache:
+        #     paper.ref_embeddings = self.ref_embeddings_cache[paper.openalexid]
 
         if paper.embedding is None:
             for result in self.embeddings_model.embed(
@@ -282,7 +294,7 @@ class Evaluator():
             ):
                 pass # we have to skipp all intermediate results
             paper.embedding = result
-            self.paper_embeddings_cache[paper.openalexid] = result 
+            #self.paper_embeddings_cache[paper.openalexid] = result 
 
         if paper.ref_embeddings is None:
             for result in self.embeddings_model.embed(
@@ -291,7 +303,7 @@ class Evaluator():
             ):
                 pass # we have to skipp all intermediate results
             paper.ref_embeddings = result
-            self.ref_embeddings_cache[paper.openalexid] = result 
+            #self.ref_embeddings_cache[paper.openalexid] = result 
 
         if paper.embedding is None or paper.ref_embeddings is None:
             paper.status = "Error during embedding calculation."
