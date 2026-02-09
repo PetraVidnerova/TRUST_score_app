@@ -70,12 +70,12 @@ class Evaluator():
 
     def __init__(self, online:bool=False, api_key:str=None,
                  force_cpu:bool=False,
-                 only_cached:bool=False):
+                 only_cached:bool=False,
+                 batch_size:bool=False):
         """ Load saved data if their exists and we are not online. """
         self.online = online
         self.api_key = api_key
         self.only_cached = only_cached
-        batch_size = None
         if online:
             force_cpu = True # for online we have to use cpu, so we force it to avoid any issues with gpu memory
             batch_size = 4 # for online we have to use smaller batch size to avoid gpu memory issues
@@ -137,14 +137,13 @@ class Evaluator():
         if paper.title is None:
             if paper.openalexid in self.titles_cache:
                 paper.title = self.titles_cache[paper.openalexid]
-                assert paper.title is not None
-            else:
+            if paper.title is None: # still None
                 select_fields.append("title")
+                
         if paper.abstract is None:
             if paper.openalexid in self.abstracts_cache:
                 paper.abstract = self.abstracts_cache[paper.openalexid]
-                assert isinstance(paper.abstract, str)
-            else:
+            if paper.abstract is None: # still None 
                 select_fields.append("abstract_inverted_index")
         if paper.openalexid in self.ref_data_cache:
             paper.references = self.ref_data_cache[paper.openalexid]
@@ -219,10 +218,12 @@ class Evaluator():
         return self.check_ref_data(paper)
 
     def check_ref_data(self, paper:Paper):
+        # leave only those that have title
+        paper.ref_data = [(t, a) for t, a in paper.ref_data if t is not None]
         if len(paper.ref_data) == 0:
             paper.status = "No valid references found after fetching data."
             return paper
-        
+
         # have we enough abstracts to calculate the score based on abstracts?
         if not paper.titles_only:
             have_abstract = 0
@@ -260,7 +261,7 @@ class Evaluator():
             else:
                 abstract = None
 
-            if not select_fields:
+            if not select_fields and title is not None:
                 paper.ref_data.append((title, abstract))
                 continue 
 
@@ -385,7 +386,7 @@ class Evaluator():
         result["titles_only"] = paper.titles_only
         result["status"] = paper.status
 
-        if not self.online:
+        if not self.online and not self.only_cached:
             self.save_cache() 
 
         return result
