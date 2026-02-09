@@ -339,7 +339,7 @@ class Evaluator():
     def return_dummy_scores(self, paper:Paper):
         return {
             "score": -1,
-            "n_related": 0,
+            "n_related": len(paper.ref_data),
             "titles_only": paper.titles_only,
             "status": paper.status   
         }
@@ -370,6 +370,7 @@ class Evaluator():
             return self.return_dummy_scores(paper)
         logger.debug(f"Reference data fetched successfully for {openalexid}. Number of valid references with data: {len(paper.ref_data)}. Titles only: {paper.titles_only}" )
 
+     
         for paper in self.calculate_embeddings(paper):
             pass # get the last result
         if paper.status != "OK":
