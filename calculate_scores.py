@@ -76,11 +76,15 @@ def main(filename, log_level, use_api_key, force_cpu, only_cached, batch_size):
         print(f"Row {index} - OpenAlex ID: {openalex_id} - Scores: {scores}")
         results[pid] = scores 
         
-        if index % 10 == 0:
+        if index % 100 == 0:
+            logger.info("Saving cache ... ")
+            evaluator.save_cache()
+            logger.info("Cache saved.")
             with open(result_backup, "wb") as f:
                 pickle.dump(results, f)
             logger.info(f"Saved intermediate results to {result_backup} after processing {index} rows.")
-
+        
+            
     with open(result_backup, "wb") as f:
         pickle.dump(results, f)
     logger.info(f"Results saved into {result_backup}. Game over.")

@@ -177,7 +177,8 @@ class Evaluator():
     
     def fetch_ref_data_batched(self, paper:Paper):
         if not self.api_key:
-            return self.fetch_ref_data(paper)
+            yield from self.fetch_ref_data(paper)
+            return 
         
         batch_size = 10
         to_process = [] # papes that has to be fetched
@@ -215,7 +216,8 @@ class Evaluator():
                 self.abstracts_cache[openalexid] = abstract
                 paper.ref_data.append((title, abstract))
 
-        return self.check_ref_data(paper)
+        yield self.check_ref_data(paper)
+        return
 
     def check_ref_data(self, paper:Paper):
         # leave only those that have title
@@ -362,7 +364,7 @@ class Evaluator():
             assert isinstance(paper.abstract, str)
         
         for paper in self.fetch_ref_data_batched(paper):
-            pass   # get the last resutl  
+            pass
         logger.debug(f"Paper status after fetching reference data: {paper.status}.")
         if paper.status != "OK":
             return self.return_dummy_scores(paper)
@@ -385,7 +387,7 @@ class Evaluator():
         result["titles_only"] = paper.titles_only
         result["status"] = paper.status
 
-        if not self.online and not self.only_cached:
-            self.save_cache() 
+        # if not self.online and not self.only_cached:
+        #     self.save_cache() 
 
         return result
