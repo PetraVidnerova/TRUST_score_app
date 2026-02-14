@@ -1,3 +1,4 @@
+import os
 import logging 
 import requests
 import torch
@@ -19,6 +20,10 @@ logger = logging.getLogger("__main__")
 def send_request(url, params, timeout, only_cached=False):
     if only_cached:
         return {}
+    if "api_key" not in params:
+        params["api_key"] = os.getenv("OPENALEX_API_KEY", "")
+        print(f"API_KEY={params['api_key']}")
+        
     params["mailto"] = "petra@cs.cas.cz"
     response = requests.get(
         url,
@@ -30,6 +35,7 @@ def send_request(url, params, timeout, only_cached=False):
         return None
     response.raise_for_status()
     data = response.json()
+    print(data)
     return data
 
 def eat_prefix(alexid):

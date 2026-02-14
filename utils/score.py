@@ -2,10 +2,12 @@ import logging
 import pickle
 from pathlib import Path
 
+from datasets import load_dataset # for loading cache from HF
 import pandas as pd
 import tqdm
 from torch.nn.functional import cosine_similarity as cosine_similarity
 from torch.nn.functional import normalize 
+
 
 from utils.embeddings import Embeddings
 from utils.utils import download_paper_data, send_request, eat_prefix, create_abstract
@@ -103,7 +105,31 @@ class Evaluator():
             logger.warning("Running in only cached mode. No API calls will be made.")
             logger.info("Loading cache files from parquet files. Takes time and memory.")
             self.load_cache_from_parquet()
+        if self.online:
+            logger.info("Loading cache files from HF.")
+            self.load_cache_from_hf()
+            logger.info("Cache loading complete.")
+       
         logger.debug("Evaluator initialized successfully.")
+
+    def load_cache_from_hf(self):
+        # Load cache from Hugging Face datasets
+        abstract_dataset_name = "PetraV77/papers-references-abstracts"
+        title_dataset_name = "PetraV77/papers-references-titles"
+        ref_data_dataset_name = "PetraV77/papers-ref-data"
+        try:
+            abstract_dataset = load_dataset(abstract_dataset_name, split="train")
+            title_dataset = load_dataset(title_dataset_name, split="train")
+            ref_data_dataset = load_dataset(ref_data_dataset_name, split="train")
+
+            self.abstracts_cache = {row["openalexid"]: row["abstract"] for row in tqdm.tqdm(abstract_dataset, desc="Loading abstracts cache from HF")}
+            self.titles_cache = {row["openalexid"]: row["abstract"] for row in tqdm.tqdm(title_dataset, desc="Loading titles cache from HF")}
+            self.ref_data_cache = {row["openalexid"]: row["abstract"] for row in tqdm.tqdm(ref_data_dataset, desc="Loading reference data cache from HF")}
+            logger.info("Cache loaded successfully from Hugging Face datasets.")
+        except Exception as e:
+            logger.error(f"Error loading cache from Hugging Face datasets: {e}")
+            raise e    
+
 
     def load_cache_from_parquet(self):
         abstracts_cache_path = Path("data/papers-references-abstracts.parquet")
@@ -179,6 +205,20 @@ class Evaluator():
         """ Fetch paper data from OpenAlex API.
         This method checks the cache first before making an API call. It updates the paper object with the fetched data.
         """
+        if self.online and paper.openalexid in self.ref_data_cache:
+            # this mean it is challenge paper and we need reproduciblity
+            paper.title = self.titles_cache.get(paper.openalexid, None)
+            paper.abstract = self.abstracts_cache.get(paper.openalexid, None)            
+            paper.references = self.ref_data_cache.get(paper.openalexid, [])
+            if paper.title is None:
+                paper.status = "Title not found."
+            if paper.abstract is None or not isinstance(paper.abstract, str):
+                paper.titles_only = True
+                logger.warning(f"Abstract not found for paper {paper.openalexid}. Will calculate score based on titles only.")
+            if not paper.references:
+                paper.status = "No references found."
+            return paper 
+
         select_fields = []
         if paper.title is None:
             if paper.openalexid in self.titles_cache:

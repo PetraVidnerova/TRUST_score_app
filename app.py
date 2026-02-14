@@ -22,6 +22,10 @@ def process_id(id_number, session_id):
     """
     Main processing function that:
     1. Fetches data from API
+    2. Processes referenced works (fetch titles and abstracts)
+    3. Calculates embeddings
+    4. Evaluates the score
+    5. Yields status updates and results at each step
     """
     now = time.time()
     last_time = user_last_request.get(session_id, 0)
@@ -42,14 +46,14 @@ def process_id(id_number, session_id):
         return 
     
     # Step 1: Fetch data from API
-    status_message += "Fetching paper metadata from API... may take a while. \n"
+    status_message += "Fetching paper metadata from API or cache ... may take a while. \n"
     yield status_message, "", no_df
 
     paper = Paper(id_number)
     paper = evaluator.fetch_paper_data(paper)
     
     if paper.status != "OK":
-        status_message += "☠️ Error fetching paper metadata. Please check the OpenAlex ID and try again.\n"
+        status_message += f"☠️ Error fetching paper metadata. {paper.status}. It may be caused by an OpenAlex API issue.\n"
         yield status_message, "", no_df
         return  
 
