@@ -4,9 +4,9 @@ import pandas as pd
 
 
 @click.command()
-@click.argument("pickled_file", default="challenge/challenge_scores.pickle")
-@click.option("--template-file", default="challenge/Challenger_Response_Form.csv", help="Path to the response form template.")
-@click.option("--output-file", default="challenge/Challenger_Response_Form_filled.csv", help="Path to save the filled response form.")
+@click.argument("pickled_file", default="data/challenge_scores.pickle")
+@click.option("--template-file", default="data/Challenger_Response_Form.csv", help="Path to the response form template.")
+@click.option("--output-file", default="data/Challenger_Response_Form_filled.csv", help="Path to save the filled response form.")
 def main(pickled_file, template_file, output_file):
     template = pd.read_csv(template_file, index_col=0)
 
@@ -14,10 +14,14 @@ def main(pickled_file, template_file, output_file):
         scores = pickle.load(f)
     scores_df = pd.DataFrame.from_dict(scores, orient="index").sort_index()
 
-
+    min_max = {
+        "paper_ref": {"min":  0.0, "max": 0.223247},
+        "ref_ref": {"min": 0.0, "max": 0.193948}
+    }
+    
     def normalize(col):
-        min = col.min()
-        max = col.max()
+        min = min_max[col.name]["min"]
+        max = min_max[col.name]["max"]
         return (col - min) / (max - min)
 
     scores_df["raw_score"] = normalize(scores_df["paper_ref"]).combine(
