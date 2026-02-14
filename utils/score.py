@@ -402,12 +402,17 @@ class Evaluator():
         paper = Paper(openalexid, title, abstract)
 
         paper = self.fetch_paper_data(paper)
+        if not isinstance(paper.title, str):
+            paper.title = None
+            paper.status = "No title."     
+        if not paper.titles_only:
+            if not isinstance(paper.abstract, str):
+                paper.abstract = None
+                paper.titles_only = True
+
         if paper.status != "OK":
             return self.return_dummy_scores(paper)
         logger.debug(f"Paper data fetched successfully for {openalexid}. Title: {paper.title}, Abstract: {'Yes' if paper.abstract else 'No'}, Number of references: {len(paper.references)}")
-        assert isinstance(paper.title, str)
-        if not paper.titles_only:
-            assert isinstance(paper.abstract, str)
         
         for paper in self.fetch_ref_data_batched(paper):
             pass
