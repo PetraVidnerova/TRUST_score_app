@@ -16,8 +16,6 @@ short_description: simple app for the purpose of novelty challenge
 
 # 📜 TRUST Score Calculator 
 
-**Author:** Petra Vidnerová, Institute of Computer Science, The Czech Academy of Sciences  
-**Acknowledgment**: the TRUST project (TODO add proper acknowledgement)
 
 This repository contains the novelty score calculator that for a given scientific paper (OpenAlex ID) returns a real number indicating the predicted novelty of the paper. The higher the score, the higher the novelty prediction. 
 
