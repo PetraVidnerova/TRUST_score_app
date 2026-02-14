@@ -2,8 +2,11 @@ import logging
 import pickle
 from pathlib import Path
 
+import pandas as pd
+import tqdm
 from torch.nn.functional import cosine_similarity as cosine_similarity
 from torch.nn.functional import normalize 
+
 from utils.embeddings import Embeddings
 from utils.utils import download_paper_data, send_request, eat_prefix, create_abstract
 
@@ -73,6 +76,9 @@ class Evaluator():
                  only_cached:bool=False,
                  batch_size:bool=False):
         """ Load saved data if their exists and we are not online. """
+        logger.debug(f"Initializing Evaluator with online={online}"
+                     f" api_key={'Yes' if api_key else 'No'}, "
+                     f" force_cpu={force_cpu}, only_cached={only_cached}, batch_size={batch_size}")
         self.online = online
         self.api_key = api_key
         self.only_cached = only_cached
@@ -81,6 +87,7 @@ class Evaluator():
             batch_size = 4 # for online we have to use smaller batch size to avoid gpu memory issues
         self.embeddings_model = Embeddings(
             device="cpu" if force_cpu else "auto", batch_size=batch_size)
+        logger.debug("Embeddings model initialized successfully.")
 
         self.titles_cache = {} # openalexid -> title
         self.abstracts_cache = {} # openalexid -> abstract
@@ -89,7 +96,46 @@ class Evaluator():
         #self.paper_embeddings_cache = {} # openalexid -> embedding
         #self.ref_embeddings_cache = {} # openalexid -> list of reference embeddings
 
-        self.load_cache()
+        if not self.online and not self.only_cached:
+            self.load_cache()
+
+        if self.only_cached:
+            logger.warning("Running in only cached mode. No API calls will be made.")
+            logger.info("Loading cache files from parquet files. Takes time and memory.")
+            self.load_cache_from_parquet()
+        logger.debug("Evaluator initialized successfully.")
+
+    def load_cache_from_parquet(self):
+        abstracts_cache_path = Path("data/papers-references-abstracts.parquet")
+        titles_cache_path = Path("data/papers-references-titles.parquet")
+        ref_data_cache_path = Path("data/papers-ref-data.parquet")
+        # load titles cache; in all caches the column is call abstract :(
+        if titles_cache_path.exists():
+            df = pd.read_parquet(titles_cache_path)
+            self.titles_cache = dict(zip(df["openalexid"], df["abstract"]))
+            logger.info("Titles cache loaded successfully from parquet.")
+        else:
+            logger.error("Titles cache parquet file not found. Titles cache will be empty.")
+            raise FileNotFoundError("Titles cache parquet file not found.")
+        # load abstracts cache
+        if abstracts_cache_path.exists():
+            df = pd.read_parquet(abstracts_cache_path)
+            self.abstracts_cache = {}
+            for row in tqdm.tqdm(df.itertuples(index=False), total=len(df)):
+                self.abstracts_cache[row.openalexid] = row.abstract
+            logger.info("Abstracts cache loaded successfully from parquet.")
+        else:
+            logger.error("Abstracts cache parquet file not found. Abstracts cache will be empty.")
+            raise FileNotFoundError("Abstracts cache parquet file not found.")
+        # load ref data cache
+        if ref_data_cache_path.exists():
+            df = pd.read_parquet(ref_data_cache_path)
+            self.ref_data_cache = dict(zip(df["openalexid"], df["abstract"]))
+            logger.info("Reference data cache loaded successfully from parquet.")
+        else:
+            logger.error("Reference data cache parquet file not found. Reference data cache will be empty.")
+            raise FileNotFoundError("Reference data cache parquet file not found.")
+        
 
     def load_cache(self):
         """ Load the cache from disk if it exists. """
