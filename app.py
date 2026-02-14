@@ -45,6 +45,9 @@ def process_id(id_number, session_id):
         yield status_message, "", no_df
         return 
     
+    status_message += f"🚀 Starting processing for OpenAlex ID: {id_number} \n"
+    yield status_message, "", no_df
+
     # Step 1: Fetch data from API
     status_message += "Fetching paper metadata from API or cache ... may take a while. \n"
     yield status_message, "", no_df
@@ -119,10 +122,27 @@ def process_id(id_number, session_id):
 
     time.sleep(0.5)
 
+    min_max = {
+        "paper_ref": {"min":  0.0, "max": 0.223247},
+        "ref_ref": {"min": 0.0, "max": 0.193948}
+    }
+    
+    def normalize(value, name):
+        min_ = min_max[name]["min"]
+        max_ = min_max[name]["max"]
+        return (value - min_) / (max_ - min_)
+
+    paper_ref_normalized = normalize(result["paper_ref"], "paper_ref")
+    ref_ref_normalized = normalize(result["ref_ref"], "ref_ref")
+    maxim = max(paper_ref_normalized, ref_ref_normalized)
+
     score_df = pd.DataFrame([
-        {"Score": "Score paper-ref", "Raw value": result["paper_ref"], "Normalized value": None},
-        {"Score": "Score ref-ref", "Raw value": result["ref_ref"], "Normalized value": None},
-        {"Score": "Score ref-std", "Raw value": result["ref_spread"], "Normalized value": None}
+        {"Score": "Score paper-ref", "Raw value": f"{result['paper_ref']:.4f}", 
+         "Normalized value": f"{paper_ref_normalized:.4f}"},
+        {"Score": "Score ref-ref", "Raw value": f"{result['ref_ref']:.4f}", 
+         "Normalized value": f"{ref_ref_normalized:.4f}"},
+         {"Score": "Score final", "Raw value": "N/A",
+          "Normalized value": f"{maxim:.4f}"}
     ])
 
 
