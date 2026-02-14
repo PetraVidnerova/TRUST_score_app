@@ -129,6 +129,10 @@ def process_id(id_number, session_id):
 with open("texts/intro.md", "r") as f:
     intro_markdown = f.read()
 
+with open("texts/bottom.md", "r") as f:
+    bottom_markdown = f.read()
+
+
 # Create Gradio interface
 with gr.Blocks(title="TRUST Score Calculator") as demo:
     
@@ -194,22 +198,17 @@ with gr.Blocks(title="TRUST Score Calculator") as demo:
     )
 
     
-    gr.Markdown("""
-    ---
-    **Note:** This app uses the specter2 model for calculating embeddings from API data.
-    The first run may take longer as the model loads.
-    """)
+    gr.Markdown(bottom_markdown)
 
 
 if __name__ == "__main__":
     demo.queue(
         max_size=10            # prevents overload
     )
-    CSS_STRING = """
-    .gradio-container {
-        overflow-y: auto !important;
-        height: auto !important;
-    }
-    """
-    #demo.launch(css=CSS_STRING)
-    demo.launch(css=CSS_STRING)
+    css = """
+body { overflow: auto !important; }
+.gradio-container { overflow: auto !important; height: 80dvh; min-height: 80vh; }
+"""
+
+    demo.launch(css=css)
+    #demo.launch()
