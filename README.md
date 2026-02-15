@@ -61,7 +61,7 @@ Otherwise:
 5. Calculates final scores. 
 
 ## How to run the calculator locally 
-Local runs are recommended and enable you to process lists of papers efficiently. Since the calculator uses the **specter2** embedding model, it is recommended to run on a GPU (but CPU run is also possible). You will also need your API token to [OpenAlex](https://openalex.org) database to fetch the data via API. Store your API token in the file `openalex_api_key.txt` in the TRUST_score_app directory. 
+Local runs are recommended and enable you to process lists of papers efficiently. Since the calculator uses the **specter2** embedding model, it is recommended to run on a GPU (but CPU run is also possible). You will also need your API token to [OpenAlex](https://openalex.org) database to fetch the data via API. Store your API token in the file `openalex_api_key.txt` in the TRUST_score_app directory and use the flag `--use-api-key`. Alternatively, you can use the environment variable OPENALEX_API_KEY (`export OPENALEX_API_KEY=XXXXXX`).
 
 The easiest way is to use `uv` to run the Python code. 
 ```sh
