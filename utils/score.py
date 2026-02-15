@@ -29,6 +29,9 @@ class Paper():
 
         self.status = "OK"
         self.titles_only = False
+        # if challenge paper, we want to have reproducible results, 
+        # so we use only cached data 
+        self.challenge_paper = False
 
 
 class Score():
@@ -207,6 +210,7 @@ class Evaluator():
         """
         if self.online and paper.openalexid in self.ref_data_cache:
             # this mean it is challenge paper and we need reproduciblity
+            paper.challenge_paper = True
             paper.title = self.titles_cache.get(paper.openalexid, None)
             paper.abstract = self.abstracts_cache.get(paper.openalexid, None)            
             paper.references = self.ref_data_cache.get(paper.openalexid, [])
@@ -262,6 +266,7 @@ class Evaluator():
         return paper 
     
     def fetch_ref_data_batched(self, paper:Paper):
+
         if not self.api_key:
             yield from self.fetch_ref_data(paper)
             return 
@@ -276,31 +281,34 @@ class Evaluator():
                 paper.ref_data.append((title, abstract))
             else:
                 to_process.append(ref)
-        # now process in batches
-        for i in range(0, len(to_process), batch_size):
-            works = to_process[i:i+batch_size]
-            works = [eat_prefix(w) for w in works]
-           
-            url = "https://api.openalex.org/works"
-            params = {
-                "api_key": self.api_key,
-                "filter": "openalex:" + "|".join(works),
-                "select": "id,title,abstract_inverted_index"
-            }
-            data = send_request(url, params, 10, only_cached=self.only_cached)
-            if data is None:
-                raise ValueError("Error during batched fetching of reference data.")
-            for item in data["results"]:
-                openalexid = eat_prefix(item["id"])
-                title = item.get("title", None)
-                abstract = item.get("abstract_inverted_index", None)
-                abstract = create_abstract(abstract)
-                if title is None:
-                    logger.warning(f"Title not found for reference {openalexid}. Skipping this reference.")
-                    continue
-                self.titles_cache[openalexid] = title
-                self.abstracts_cache[openalexid] = abstract
-                paper.ref_data.append((title, abstract))
+
+        if not (self.online and paper.challenge_paper):
+            
+            # now process in batches
+            for i in range(0, len(to_process), batch_size):
+                works = to_process[i:i+batch_size]
+                works = [eat_prefix(w) for w in works]
+            
+                url = "https://api.openalex.org/works"
+                params = {
+                    "api_key": self.api_key,
+                    "filter": "openalex:" + "|".join(works),
+                    "select": "id,title,abstract_inverted_index"
+                }
+                data = send_request(url, params, 10, only_cached=self.only_cached)
+                if data is None:
+                    raise ValueError("Error during batched fetching of reference data.")
+                for item in data["results"]:
+                    openalexid = eat_prefix(item["id"])
+                    title = item.get("title", None)
+                    abstract = item.get("abstract_inverted_index", None)
+                    abstract = create_abstract(abstract)
+                    if title is None:
+                        logger.warning(f"Title not found for reference {openalexid}. Skipping this reference.")
+                        continue
+                    self.titles_cache[openalexid] = title
+                    self.abstracts_cache[openalexid] = abstract
+                    paper.ref_data.append((title, abstract))
 
         yield self.check_ref_data(paper)
         return
@@ -339,15 +347,22 @@ class Evaluator():
             if ref in self.titles_cache:
                 title = self.titles_cache[ref]
             else: 
+                title = None 
                 select_fields.append("title")
             # abstract    
             if not paper.titles_only:
                 if ref in self.abstracts_cache:
                     abstract = self.abstracts_cache[ref]
                 else:
+                    abstract = None
                     select_fields.append("abstract_inverted_index") 
             else:
                 abstract = None
+
+            if self.online and paper.challenge_paper:
+                if title is not None:
+                    paper.ref_data.append((title, abstract))
+                continue
 
             if not select_fields and title is not None:
                 paper.ref_data.append((title, abstract))
