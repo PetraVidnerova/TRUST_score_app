@@ -48,22 +48,28 @@ def main(pickled_file, template_file, output_file):
     not_computed = scores_df["score"] == -1
     title_only = scores_df["titles_only"] == True 
 
-    template.loc[not_computed, "NoveltyRaw"] = -1
+    template.loc[not_computed, "NoveltyRaw"] = 0
 
     template["NoveltyRaw_Certainty"] = 1.0
     template.loc[not_computed, "NoveltyRaw_Certainty"] = 0.0
     template.loc[title_only, "NoveltyRaw_Certainty"] = 0.5   
 
+    
+    def convert(col):
+        # convert to 1-100 scale frm 0-1
+        return 1.0 + col * 99.0
+    
     # convert raw  
-    template["NoveltyConverted"] = template["NoveltyRaw"]
-    template.loc[not_computed, "NoveltyConverted"] = 0.5 
+    template["NoveltyConverted"] = convert(template["NoveltyRaw"])
+    template.loc[not_computed, "NoveltyConverted"] = 49.0   
 
     template["NoveltyConverted_Certainty"] = 1.0
     template.loc[not_computed, "NoveltyConverted_Certainty"] = 0.0
     template.loc[title_only, "NoveltyConverted_Certainty"] = 0.5
 
     # binary novelty 
-    template["NoveltyBinary"] = (template["NoveltyConverted"] >= 0.675).astype(float)
+    template["NoveltyBinary"] = (template["NoveltyRaw"] >= 0.677).astype(int)
+
     template["NoveltyBinary_Certainty"] = 1.0
     template.loc[not_computed, "NoveltyBinary_Certainty"] = 0.0
     template.loc[title_only, "NoveltyBinary_Certainty"] = 0.5
