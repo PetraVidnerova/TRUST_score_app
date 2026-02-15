@@ -28,11 +28,11 @@ Each document is represented using SPECTER2 embeddings [1], which are designed s
 
 The indicator consists of two complementary components:
 
-+ Paper–Reference Distance
++ **Paper–Reference Distance**
 
-We compute the mean conceptual distance between the focal paper and each of its references. Distance is measured as cosine similarity between the corresponding embeddings subtracted from the constant value (we use 1.0, since scientific references are typically related to the citing paper and therefor cosine similarities are high, non negative). Lower similarity (i.e. larger distance) indicates greater conceptual departure from prior work.
+We compute the mean conceptual distance between the focal paper and each of its references. Distance is measured as cosine similarity between the corresponding embeddings subtracted from the constant value (we use 1.0, since scientific references are typically related to the citing paper and therefore cosine similarities are high, non-negative). Lower similarity (i.e. larger distance) indicates greater conceptual departure from prior work.
 
-+ Reference–Reference Distance
++ **Reference–Reference Distance**
 
 We compute the mean pairwise distance between all cited references, again using cosine similarity. This component captures the extent to which a paper draws on conceptually diverse or weakly connected papers.
 
