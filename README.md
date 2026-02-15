@@ -13,75 +13,6 @@ short_description: simple app for the purpose of novelty challenge
 
 <hr>
 
-
-
-
-
-w
-How to run the calculator locally
-
-Local runs are recommended and enable you to process lists of papers efficiently. Since the calculator uses the specter2 embedding model, it is recommended to run on a GPU (but CPU run is also possible). You will also need your API token to OpenAlex database to fetch the data via API. Store your API token in the file openalex_api_key.txt in the TRUST_score_app directory.
-
-The easiest way is to use uv to run the Python code.
-
-uv run calculate_scores.py data/Metadata\ file\ COMBINED.csv
-
-Alternatively, you can install the references via pip.
-
-pip install -r requirements.txt 
-
-and run the script via Python
-
-python calculate_scores.py data/Metadata\ file\ COMBINED.csv
-
-The overview of usage:
-
-Usage: calculate_scores.py [OPTIONS] [FILENAME]
-
-Options:
-  --log-level [DEBUG|INFO|WARNING|ERROR]
-  --use-api-key
-  --force-cpu
-  --only-cached                   Only evaluate papers that have cached data
-                                  available, skip others.
-  --batch-size INTEGER
-  --help                          Show this message and exit.
-
-By default, the script runs with device="auto", you can supress the use of GPU by --force-cpu.
-The --batch-size controls the number of (title, abstract) embeddings computed in one batch, you can experiment with this option if you have enough memory. Higher batches help to speed up the computation.
-
-The input CSV files must have columns named “PaperProjectID”, “OpenAlexID (as URL)”, and optionally “Title” and “Abstract”. If title or abstract is not included, data are downloaded from OpenAlex API.
-
-The script produces an output file with pickled dictionary (you may specify its name using --output option). To convert this raw scores to final scores, use convert_pickle_to_scores.py:
-
-uv run convert_pickle_to_scores.py data/challenge_scores.pickle  --output-file scores.csv
-
-
-How to reproduce our results
-
-Since the OpenAlex API is not perfectly stable (sometimes data for a valid ID is not returned, and if it is a reference, our script skips it), you may get slightly different results from ours. If you want to reproduce the results exactly, download the prepared .parquet files (the TRUST_score_data folder of this project) with the downloaded titles, abstracts, and reference lists, and place them in the data directory. Then disable API calls with --only-cached.
-
-Warning: Since the script loads quite large cached files, it is recommended to use a computer with 32G memory (the script uses approx 8G RAM). I am able to run it on the laptop with 16G, but it’s not ideal if other applications are also running.
-
-uv run calculate_scores.py data/Metadata\ file\ COMBINED.csv  --only-cached
-
-or disable GPU
-
-uv run calculate_scores.py data/Metadata\ file\ COMBINED.csv --force-cpu --only-cached
-
-To fill the challenge template, use the script fill_result_form.py:
-
-Usage: fill_result_form.py [OPTIONS] [PICKLED_FILE]
-
-Options:
-  --template-file TEXT  Path to the response form template.
-  --output-file TEXT    Path to save the filled response form.
-  --help                Show this message and exit.
-
-such as
-
-uv run fill_result_form.py data/challenge_scores.pickle --template-data/Challenger_Response_Form.csv --output-file data/filed_form2.csv 
-
 # 📜 TRUST Score Calculator 
 
 This repository contains the novelty score calculator that for a given scientific paper (OpenAlex ID) returns a real number indicating the predicted novelty of the paper. The higher the score, the higher the novelty prediction.
@@ -158,15 +89,45 @@ Options:
   --batch-size INTEGER
   --help                          Show this message and exit.
 ```
-By default, the script runs with `device="auto"`, you can supress the use of GPU by `--force-cpu`. 
-The `--batch-size` controls the number of (title, abstract) embeddings computed in one batch, you can experiment with this option if you have enough memory. Higher batches help to speed up the computation.
+By default, the script runs with `device="auto"`, you can suppress the use of GPU by `--force-cpu`. 
+The `--batch-size` controls the number of (title, abstract) embeddings computed in one batch; you can experiment with this option if you have enough memory. Higher batches help to speed up the computation.
+
+The input CSV files must have columns named “PaperProjectID”, “OpenAlexID (as URL)”, and optionally “Title” and “Abstract”. If the title or abstract is not included, data are downloaded from *OpenAlex API*.
+
+The output is a file with `pickled` dictionary (you may specify its name using `--output` option). To convert these raw scores to final scores, use `convert_pickle_to_scores.py`:
+```sh
+uv run convert_pickle_to_scores.py data/challenge_scores.pickle  --output-file scores.csv
+```
 
 ### How to reproduce our results
 Since the OpenAlex API is not perfectly stable (sometimes data for a valid ID is not returned, and if it is a reference, our script skips it), you may get slightly different results from ours. If you want to reproduce the results exactly, download the prepared `.parquet` files with the downloaded titles, abstracts, and reference lists, and place them in the `data` directory. Then disable API calls with `--only-cached`.
 
+**Warning**: Since the script loads large cached files, it is recommended to use a computer with 32GB of memory (the script uses approx. 8 GB of RAM). I can run it on the laptop with 16 GB, but it’s not ideal when other applications are also running.
+ 
 ```sh
-uv run calculate_scores.py data/Metadata\ file\ COMBINED.csv --force-cpu --only-cached
+uv run calculate_scores.py data/Metadata\ file\ COMBINED.csv  --only-cached
 ```
+or on CPU 
+```sh
+uv run calculate_scores.py data/Metadata\ file\ COMBINED.csv  --force-cpu --only-cached
+```
+
+To fill the challenge result form, use the script `fill_result_form.py`:
+```
+Usage: fill_result_form.py [OPTIONS] [PICKLED_FILE]
+
+Options:
+  --template-file TEXT  Path to the response form template.
+  --output-file TEXT    Path to save the filled response form.
+  --help                Show this message and exit.
+```
+
+such as
+```sh
+uv run fill_result_form.py data/challenge_scores.pickle --template-data/Challenger_Response_Form.csv --output-file data/filed_form2.csv 
+```
+[]
+
 
 
 
