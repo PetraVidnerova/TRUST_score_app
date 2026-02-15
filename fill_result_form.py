@@ -10,10 +10,24 @@ import pandas as pd
 def main(pickled_file, template_file, output_file):
     template = pd.read_csv(template_file, index_col=0)
 
+    helper = pd.DataFrame()
+    helper["PaperProjectID"] = template.index
+    
     with open(pickled_file, "rb") as f:
         scores = pickle.load(f)
     scores_df = pd.DataFrame.from_dict(scores, orient="index").sort_index()
-
+    
+    # add also rows for missing IDs 
+    original_columns = scores_df.columns.to_list()
+    scores_df = (
+        pd.merge(template, scores_df, 
+                 left_on=template.index,
+                 right_on=scores_df.index, 
+                 how="left")
+        .rename(columns={"key_0": "PaperProjectID"})
+        .set_index("PaperProjectID")
+    )[original_columns]
+    
     min_max = {
         "paper_ref": {"min":  0.0, "max": 0.223247},
         "ref_ref": {"min": 0.0, "max": 0.193948}
