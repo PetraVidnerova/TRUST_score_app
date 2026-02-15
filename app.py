@@ -135,14 +135,17 @@ def process_id(id_number, session_id):
     paper_ref_normalized = normalize(result["paper_ref"], "paper_ref")
     ref_ref_normalized = normalize(result["ref_ref"], "ref_ref")
     maxim = max(paper_ref_normalized, ref_ref_normalized)
+    maxim_normalized = (1.0 + maxim * 99.0)
+    #clip to 1-100 range
+    maxim_normalized = max(1.0, min(maxim_normalized, 100.0))
 
     score_df = pd.DataFrame([
         {"Score": "Score paper-ref", "Raw value": f"{result['paper_ref']:.4f}", 
          "Normalized value": f"{paper_ref_normalized:.4f}"},
         {"Score": "Score ref-ref", "Raw value": f"{result['ref_ref']:.4f}", 
          "Normalized value": f"{ref_ref_normalized:.4f}"},
-         {"Score": "Score final", "Raw value": "N/A",
-          "Normalized value": f"{maxim:.4f}"}
+         {"Score": "Score final", "Raw value": f"{maxim:.4f}",
+          "Normalized value": f"{maxim_normalized:.4f}"}
     ])
 
 
