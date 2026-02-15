@@ -17,7 +17,8 @@ logger.addHandler(handler)
 logger.propagate = False
 
 @click.command()
-@click.argument("filename", type=click.Path(exists=True), default="data/challenge_data.csv")
+@click.argument("filename", type=click.Path(exists=True),
+                default="data/Metadata file COMBINED.csv")
 @click.option("--log-level", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"]), 
               default="INFO")
 @click.option("--use-api-key", is_flag=True, default=False)
