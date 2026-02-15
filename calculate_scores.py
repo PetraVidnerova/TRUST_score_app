@@ -19,15 +19,17 @@ logger.propagate = False
 @click.command()
 @click.argument("filename", type=click.Path(exists=True),
                 default="data/Metadata file COMBINED.csv")
+@click.option("--output", type=click.Path(), 
+              default="data/challenge_scores.pickle", 
+              help="Output pickle file to save the raw partial scores.")
 @click.option("--log-level", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"]), 
               default="INFO")
 @click.option("--use-api-key", is_flag=True, default=False)
 @click.option("--force-cpu", is_flag=True, default=False)
 @click.option("--only-cached", is_flag=True, default=False, help="Only evaluate papers that have cached data available, skip others.")
 @click.option("--batch-size", default=4)
-def main(filename, log_level, use_api_key, force_cpu, only_cached, batch_size):
-    result_backup = "data/challenge_scores.pickle"
-    result_filename = "data/challenge_scores_final.csv" 
+def main(filename, output, log_level, use_api_key, force_cpu, only_cached, batch_size):
+    result_backup = output 
     id_string = "OpenAlexID (as URL)"
     paper_id = "PaperProjectID" 
     title_string = "Title"
