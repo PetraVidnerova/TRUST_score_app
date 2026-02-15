@@ -51,8 +51,8 @@ def main(pickled_file, template_file, output_file):
     template.loc[not_computed, "NoveltyRaw"] = 0
 
     template["NoveltyRaw_Certainty"] = 1.0
-    template.loc[not_computed, "NoveltyRaw_Certainty"] = 0.0
-    template.loc[title_only, "NoveltyRaw_Certainty"] = 0.5   
+    template.loc[title_only, "NoveltyRaw_Certainty"] = 0.5
+    template.loc[not_computed, "NoveltyRaw_Certainty"] = 0   
 
     
     def convert(col):
@@ -64,21 +64,22 @@ def main(pickled_file, template_file, output_file):
     template.loc[not_computed, "NoveltyConverted"] = 49.0   
 
     template["NoveltyConverted_Certainty"] = 1.0
-    template.loc[not_computed, "NoveltyConverted_Certainty"] = 0.0
     template.loc[title_only, "NoveltyConverted_Certainty"] = 0.5
-
+    template.loc[not_computed, "NoveltyConverted_Certainty"] = 0.0
+    
     # binary novelty 
     template["NoveltyBinary"] = (template["NoveltyRaw"] >= 0.677).astype(int)
 
     template["NoveltyBinary_Certainty"] = 1.0
-    template.loc[not_computed, "NoveltyBinary_Certainty"] = 0.0
     template.loc[title_only, "NoveltyBinary_Certainty"] = 0.5
+    template.loc[not_computed, "NoveltyBinary_Certainty"] = 0.0
 
     # rank the papers by novelty
     template["Rank"] = template["NoveltyRaw"].rank(ascending=False, method="max")
 
     # save the filled template
     template.to_csv(output_file)
+    print(f"Filled response form saved to {output_file}")
 
 if __name__ == "__main__":
     main()
