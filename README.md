@@ -12,25 +12,29 @@ GENERAL INFORMATION
 
 - Software title: TRUST Score Calculator
 
-- Software DOI: ZENODO
+- Software DOI: http://doi.org/10.5281/zenodo.19064747 
 
-- Author: Petra Vidnerová, ORCID: https://sandbox.orcid.org/0009-0006-2424-7712
+- Author: Petra Vidnerová, ORCID: https://orcid.org/0000-0003-3879-3459 
 
 - Affiliation: Institute of Computer Science of the Czech Academy of Science
 
 - ROR: https://ror.org/0496n6574 
 
-- Description: This is an example softwere which doesn't do anything really...except for serving as an example.
-
-- Contributors: 
+- Description:  This repository contains the novelty score calculator that for a given scientific paper (OpenAlex ID) returns a real number indicating the predicted novelty of the paper. The higher the score, the higher the novelty prediction.
+  
+You can try the demo on the HuggingFace space [TRUST_score](https://huggingface.co/spaces/PetraV77/TRUST_score) (please do not overload the HF space, it is intended for demonstration purposes only and to demonstrate reproducibility). Recommended usage is to download the source code to your computer and run it locally. 
+See below the [instructions](#how-to-run-the-calculator-locally).
+ 
 
 - Funding sources: „This work has been funded by a grant from the Programme Johannes Amos Comenius under the Ministry of Education, Youth and Sports of the Czech Republic, CZ.02.01.01/00/23_025/0008711.
 
+<img src="img/logo.png" width=70%/>
+
 - Language: English
   
-- Key words: example, software, publication
+- Key words: novelty detection, embeddings, scientific papers
 
-- Field of study: [Pick one here](https://tacr.gov.cz/wp-content/uploads/documents/2021/04/26/1619432556_Struktura%20obor%C5%AF%20FORD.pdf)
+- Field of study: 1.2 Computer and information sciences 
 
 ----------------------
 LEGAL AND ETHICAL ASPECTS
@@ -77,11 +81,6 @@ Doe, John. (2026). Example Software. Zenodo. https://doi.org/10.5072/zenodo.4472
 
 
 
-
-This repository contains the novelty score calculator that for a given scientific paper (OpenAlex ID) returns a real number indicating the predicted novelty of the paper. The higher the score, the higher the novelty prediction.
-
-You can try the demo on the HuggingFace space [TRUST_score](https://huggingface.co/spaces/PetraV77/TRUST_score) (please do not overload the HF space, it is intended for demonstration purposes only and to demonstrate reproducibility). Recommended usage is to download the source code to your computer and run it locally. 
-See below the [instructions](#how-to-run-the-calculator-locally).
 
 ## About the score  
 
