@@ -24,7 +24,7 @@ GENERAL INFORMATION
 
 - Contributors: 
 
-- Funding sources: This work has been produced with the financial support of the European Union under the: 'TRUST' project no.: CZ.XXX via the Operational Programme Jan Ámos Komenský. 
+- Funding sources: „This work has been funded by a grant from the Programme Johannes Amos Comenius under the Ministry of Education, Youth and Sports of the Czech Republic, CZ.02.01.01/00/23_025/0008711.
 
 - Language: English
   
