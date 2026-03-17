@@ -1,0 +1,47 @@
+{
+  "title": "TRUST Score Calculator",
+  "description": "This repository contains the novelty score calculator that for a given scientific paper (OpenAlex ID) returns a real number indicating the predicted novelty of the paper. The higher the score, the higher the novelty prediction.",
+  "upload_type": "software",
+  "creators": [
+    {
+      "name": "Vidnerová, Petra",
+      "affiliation": "Czech Academy of Sciences: Institute of Computer Science",
+      "orcid": "0000-0003-3879-3459"
+    },
+    {
+      "name": "Šejnoha, Jiří",
+      "affiliation": "Czech Academy of Sciences: Institute of Computer Science",
+      "orcid": "0000-0002-1024-7694"
+    },
+    {
+      "name": "Neruda, Roman",
+      "affiliation": "Czech Academy of Sciences: Institute of Computer Science",
+      "orcid": "0000-0003-2364-5357"
+    },
+    {
+      "name": "Kaše, Vojtěch",
+      "affiliation": "Czech Academy of Sciences: Institute of Computer Science",
+      "orcid": "0000-0002-6601-1605"
+    },
+    {
+      "name": "Hladík, Radim",
+      "affiliation": "Czech Academy of Sciences: Institute of Computer Science",
+      "orcid": "0000-0001-8078-6477"
+    },
+    {
+      "name": "Hlinka, Jaroslav",
+      "affiliation": "Czech Academy of Sciences: Institute of Computer Science",
+      "orcid": "0000-0003-1402-1470"
+    }
+  ],
+  "access_right": "open",
+  "license": "mit",
+  "communities": [
+    {"identifier": "icscas"}
+  ],
+  "keywords": [
+    "novelty detection",
+    "embeddings",
+    "scientific papers"
+  ]
+}
