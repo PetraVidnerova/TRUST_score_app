@@ -23,17 +23,15 @@ GENERAL INFORMATION
            Radim Hladík,
            Jaroslav Hlinka.
 
-- Affiliation: Institute of Computer Science of the Czech Academy of Science
-
-- ROR: https://ror.org/0496n6574 
+- Affiliation: Institute of Computer Science of the Czech Academy of Sciences
+  - ROR: https://ror.org/0496n6574 
 
 - Description:  This repository contains the novelty score calculator that for a given scientific paper (OpenAlex ID) returns a real number indicating the predicted novelty of the paper. The higher the score, the higher the novelty prediction.
   
 You can try the demo on the HuggingFace space [TRUST_score](https://huggingface.co/spaces/PetraV77/TRUST_score) (please do not overload the HF space, it is intended for demonstration purposes only and to demonstrate reproducibility). Recommended usage is to download the source code to your computer and run it locally. 
 See below the [instructions](#how-to-run-the-calculator-locally).
- 
 
-- Funding sources: „This work has been funded by a grant from the Programme Johannes Amos Comenius under the Ministry of Education, Youth and Sports of the Czech Republic, CZ.02.01.01/00/23_025/0008711.
+- Funding sources: This work has been funded by a grant from the Programme Johannes Amos Comenius under the Ministry of Education, Youth and Sports of the Czech Republic, CZ.02.01.01/00/23_025/0008711.
 
 <img src="img/logo.png" width=70%/>
 
@@ -41,7 +39,7 @@ See below the [instructions](#how-to-run-the-calculator-locally).
   
 - Key words: novelty detection, embeddings, scientific papers
 
-- Field of study: 1.2 Computer and information sciences 
+- Field of study (FORD): 1.2 Computer and information sciences 
 
 ----------------------
 LEGAL AND ETHICAL ASPECTS
@@ -70,7 +68,7 @@ About the score
 
 Our indicator is based on text analysis and embedding representations, using document embeddings to capture the semantic content of scientific publications and their references. As input data, we use the title and abstract of a focal paper and the titles and abstracts of all papers it cites. If the abstract of a focal paper is not available or there are not enough abstracts of references, only titles are used.
 
-Each document is represented using SPECTER2 embeddings [1], which are designed specifically for scientific texts. These embeddings allow us to measure conceptual similarity between papers in a continuous vector space.
+Each document is represented using SPECTER2 embeddings [[1]](#bibliography), which are designed specifically for scientific texts. These embeddings allow us to measure conceptual similarity between papers in a continuous vector space.
 
 The indicator consists of two complementary components:
 
@@ -88,10 +86,11 @@ Both components are normalized to ensure comparability. The final indicator scor
 
   +  it connects or combines conceptually distant areas of research.
 
-We tried several ways of combining the two components, the maximum was chosen as it best fitted the novelty scores in dataset published with the paper [2].
+We tried several ways of combining the two components, the maximum was chosen as it best fitted the novelty scores in dataset published with the paper [[2]](#bibliography).
 
 Note: Our first intention was to work with full texts and extracts structured summary from them using LLMs, but this approach does not scale well to large number of papers and also we failed to download a full text in many cases. Therefore we decided to use only abstracts and titles. The future direction is to make structured summary (extracting methods, main ideas, key findings) from full texts and create embeddings from them.
 
+### Bibliography
 [1] Singh, Amanpreet et al. “SciRepEval: A Multi-Format Benchmark for Scientific Document Representations.” Conference on Empirical Methods in Natural Language Processing (2022).
 
 [2] Daeseong Jeon, Junyoup Lee, Joon Mo Ahn, Changyong Lee. Measuring the novelty of scientific publications: A fastText and local outlier factor approach, Journal of Informetrics, Volume 17, Issue 4, 2023, 101450, ISSN 1751-1577, https://doi.org/10.1016/j.joi.2023.101450
