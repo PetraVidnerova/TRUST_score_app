@@ -3,7 +3,9 @@
 # 📜 TRUST Score Calculator 
 
 This README file was generated on 2026-03-17 by Petra Vidnerová, petra@cs.cas.cz
+
 Last updated: 2026-03-17.
+
 Version: 1.0
 
 ----------------------
@@ -48,41 +50,18 @@ LEGAL AND ETHICAL ASPECTS
 
 - Ethical aspects: none
 
-
-----------------------
-FILE OVERVIEW
-----------------------
-
-- `hello_world.py`: Example code in Python 3.0.
-- `LICENSE`: Example license file
-- `.zenodo.json`: Configuration file for Zenodo-GitHub integration, which ensures that Zenodo records produced automatically
-                with every release of this repository have correct metadata automatically filled in.
-- `README.md`: This file.
-
-----------------------
-ORIGIN AND METHODOLOGY
-----------------------
-
-- This software was created from scratch by the author and Google Gemini 3 AI.
-
-----------------------
-HOW TO USE THIS SOFTWARE
-----------------------
-
-- Execute it with command `python3 hello_world.py` to see the beautiful message!
-- *(Note: requirements.txt or environment.yml file should be included to specify the necessary libraries.)*
   
 ----------------------
 CITATION OF THIS SOFTWARE
 ----------------------
 
-Doe, John. (2026). Example Software. Zenodo. https://doi.org/10.5072/zenodo.447283
+Vidnerová, Petra. (2026). TRUST Score Calculator. Zenodo. http://doi.org/10.5281/zenodo.19064747 
 
 
 
-
-
-## About the score  
+----------------------
+About the score  
+----------------------
 
 Our indicator is based on text analysis and embedding representations, using document embeddings to capture the semantic content of scientific publications and their references. As input data, we use the title and abstract of a focal paper and the titles and abstracts of all papers it cites. If the abstract of a focal paper is not available or there are not enough abstracts of references, only titles are used.
 
@@ -112,8 +91,9 @@ Note: Our first intention was to work with full texts and extracts structured su
 
 [2] Daeseong Jeon, Junyoup Lee, Joon Mo Ahn, Changyong Lee. Measuring the novelty of scientific publications: A fastText and local outlier factor approach, Journal of Informetrics, Volume 17, Issue 4, 2023, 101450, ISSN 1751-1577, https://doi.org/10.1016/j.joi.2023.101450
 
-
-## The TRUST Score calculator App 
+----------------------
+The TRUST Score calculator App 
+----------------------
 
 1. In case the paper is from the novelty challenge dataset, it finds in prepared datasets   the title, abstract and references, as well as titles and abstracts for all references. 
 Otherwise: 
@@ -122,7 +102,10 @@ Otherwise:
 4. Converts couples (title, abstract) into embedding vectors using **allenai/specter2** model.
 5. Calculates final scores. 
 
-## How to run the calculator locally 
+----------------------
+How to run the calculator locally 
+----------------------
+
 Local runs are recommended and enable you to process lists of papers efficiently. Since the calculator uses the **specter2** embedding model, it is recommended to run on a GPU (but CPU run is also possible). You will also need your API token to [OpenAlex](https://openalex.org) database to fetch the data via API. Store your API token in the file `openalex_api_key.txt` in the TRUST_score_app directory and use the flag `--use-api-key`. Alternatively, you can use the environment variable OPENALEX_API_KEY (`export OPENALEX_API_KEY=XXXXXX`).
 
 The easiest way is to use `uv` to run the Python code. 
@@ -188,7 +171,6 @@ such as
 ```sh
 uv run fill_result_form.py data/challenge_scores.pickle --template-data/Challenger_Response_Form.csv --output-file data/filed_form2.csv 
 ```
-[]
 
 
 
