@@ -1,19 +1,82 @@
----
-title: TRUST Score
-emoji: 👁
-colorFrom: blue
-colorTo: red
-sdk: gradio
-sdk_version: 6.5.1
-app_file: app.py
-pinned: false
-license: mit
-short_description: simple app for the purpose of novelty challenge
----
-
 <hr>
 
 # 📜 TRUST Score Calculator 
+
+This README file was generated on 2026-03-17 by Petra Vidnerová, petra@cs.cas.cz
+Last updated: 2026-03-17.
+Version: 1.0
+
+----------------------
+GENERAL INFORMATION
+----------------------
+
+- Software title: TRUST Score Calculator
+
+- Software DOI: ZENODO
+
+- Author: Petra Vidnerová, ORCID: https://sandbox.orcid.org/0009-0006-2424-7712
+
+- Affiliation: Institute of Computer Science of the Czech Academy of Science
+
+- ROR: https://ror.org/0496n6574 
+
+- Description: This is an example softwere which doesn't do anything really...except for serving as an example.
+
+- Contributors: 
+
+- Funding sources: This work has been produced with the financial support of the European Union under the: 'TRUST' project no.: CZ.XXX via the Operational Programme Jan Ámos Komenský. 
+
+- Language: English
+  
+- Key words: example, software, publication
+
+- Field of study: [Pick one here](https://tacr.gov.cz/wp-content/uploads/documents/2021/04/26/1619432556_Struktura%20obor%C5%AF%20FORD.pdf)
+
+----------------------
+LEGAL AND ETHICAL ASPECTS
+----------------------
+
+- License: MIT
+  
+- Conditions of use: https://opensource.org/license/mit
+
+- Copyrights/restrictions: none
+
+- Ethical aspects: none
+
+
+----------------------
+FILE OVERVIEW
+----------------------
+
+- `hello_world.py`: Example code in Python 3.0.
+- `LICENSE`: Example license file
+- `.zenodo.json`: Configuration file for Zenodo-GitHub integration, which ensures that Zenodo records produced automatically
+                with every release of this repository have correct metadata automatically filled in.
+- `README.md`: This file.
+
+----------------------
+ORIGIN AND METHODOLOGY
+----------------------
+
+- This software was created from scratch by the author and Google Gemini 3 AI.
+
+----------------------
+HOW TO USE THIS SOFTWARE
+----------------------
+
+- Execute it with command `python3 hello_world.py` to see the beautiful message!
+- *(Note: requirements.txt or environment.yml file should be included to specify the necessary libraries.)*
+  
+----------------------
+CITATION OF THIS SOFTWARE
+----------------------
+
+Doe, John. (2026). Example Software. Zenodo. https://doi.org/10.5072/zenodo.447283
+
+
+
+
 
 This repository contains the novelty score calculator that for a given scientific paper (OpenAlex ID) returns a real number indicating the predicted novelty of the paper. The higher the score, the higher the novelty prediction.
 
