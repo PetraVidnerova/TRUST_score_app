@@ -16,7 +16,12 @@ GENERAL INFORMATION
 
 - Software DOI: http://doi.org/10.5281/zenodo.19064747 
 
-- Author: Petra Vidnerová, ORCID: https://orcid.org/0000-0003-3879-3459 
+- Authors: Petra Vidnerová, ORCID: https://orcid.org/0000-0003-3879-3459, 
+           Jiří Šejnoha,
+           Roman Neruda,
+           Vojtěch Kaše,
+           Radim Hladík,
+           Jaroslav Hlinka.
 
 - Affiliation: Institute of Computer Science of the Czech Academy of Science
 
@@ -55,7 +60,7 @@ LEGAL AND ETHICAL ASPECTS
 CITATION OF THIS SOFTWARE
 ----------------------
 
-Vidnerová, Petra. (2026). TRUST Score Calculator. Zenodo. http://doi.org/10.5281/zenodo.19064747 
+Vidnerová, et al. (2026). TRUST Score Calculator. Zenodo. http://doi.org/10.5281/zenodo.19064747 
 
 
 
