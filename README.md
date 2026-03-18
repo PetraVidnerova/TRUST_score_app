@@ -17,11 +17,11 @@ GENERAL INFORMATION
 - Software DOI: http://doi.org/10.5281/zenodo.19064747 
 
 - Authors: Petra Vidnerová, ORCID: https://orcid.org/0000-0003-3879-3459, 
-           Jiří Šejnoha,
-           Roman Neruda,
-           Vojtěch Kaše,
-           Radim Hladík,
-           Jaroslav Hlinka.
+           Jiří Šejnoha, ORCID: https://orcid.org/0000-0002-7504-7677, 
+           Roman Neruda, ORCID: https://orcid.org/0000-0003-2364-5357,
+           Vojtěch Kaše, ORCID: https://orcid.org/0000-0002-6601-1605, 
+           Radim Hladík, ORCID: https://orcid.org/0000-0001-8078-6477,
+           Jaroslav Hlinka, ORCID: https://orcid.org/0000-0003-1402-1470. 
 
 - Affiliation: Institute of Computer Science of the Czech Academy of Sciences
   - ROR: https://ror.org/0496n6574 
