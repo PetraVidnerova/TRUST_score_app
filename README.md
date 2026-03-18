@@ -4,7 +4,7 @@
 
 This README file was generated on 2026-03-17 by Petra Vidnerová, petra@cs.cas.cz
 
-Last updated: 2026-03-17.
+Last updated: 2026-03-18.
 
 Version: 1.0
 
