@@ -16,17 +16,17 @@ GENERAL INFORMATION
 
 - Authors:
 
-|                 | ORCID                                 |
-| --------------- | ------------------------------------- |
-| Petra Vidnerová | https://orcid.org/0000-0003-3879-3459 |
-| Jiří Šejnoha    | https://orcid.org/0000-0002-7504-7677 |
-| Roman Neruda    | https://orcid.org/0000-0003-2364-5357 |
-| Vojtěch Kaše    | https://orcid.org/0000-0002-6601-1605 |
-| Radim Hladík    | https://orcid.org/0000-0001-8078-6477 |
-| Jaroslav Hlinka | https://orcid.org/0000-0003-1402-1470 |
+|                 | ORCID                                 | Affiliation                                                  | 
+| --------------- | ------------------------------------- | ------------------------------------------------------------ |
+| Petra Vidnerová | https://orcid.org/0000-0003-3879-3459 | Institute of Computer Science, The Czech Academy of Sciences |
+| Jiří Šejnoha    | https://orcid.org/0000-0002-7504-7677 | Institute of Computer Science, The Czech Academy of Sciences |
+| Roman Neruda    | https://orcid.org/0000-0003-2364-5357 | Institute of Computer Science, The Czech Academy of Sciences |
+| Vojtěch Kaše    | https://orcid.org/0000-0002-6601-1605 | Institute of Philosophy, The Czech Academy of Sciences       |
+| Radim Hladík    | https://orcid.org/0000-0001-8078-6477 | Institute of Philosophy, The Czech Academy of Sciences       |
+| Jaroslav Hlinka | https://orcid.org/0000-0003-1402-1470 | Institute of Computer Science, The Czech Academy of Sciences |
 
 
-- Affiliation: Institute of Computer Science of the Czech Academy of Sciences
+- Main author's affiliation: Institute of Computer Science of the Czech Academy of Sciences
   - ROR: https://ror.org/0496n6574 
 
 - Description:  This repository contains the novelty score calculator that for a given scientific paper (OpenAlex ID) returns a real number indicating the predicted novelty of the paper. The higher the score, the higher the novelty prediction.
