@@ -45,6 +45,38 @@ See below the [instructions](#how-to-run-the-calculator-locally).
 - Field of study (FORD): 1.2 Computer and information sciences 
 
 ----------------------
+REPOSITORY STRUCTURE
+----------------------
+
+```
+TRUST_score_app/
+├── app.py                        # Gradio web app (HuggingFace demo)
+├── calculate_scores.py           # Main script to calculate TRUST scores
+├── convert_pickle_to_scores.py   # Convert raw pickle results to final scores
+├── fill_result_form.py           # Fill the challenge response form
+├── pyproject.toml                # Project metadata and dependencies
+├── requirements.txt              # Python dependencies
+├── CITATION.cff                  # Citation metadata
+├── LICENSE                       # MIT license
+├── README.md
+├── data/                         # Data directory (parquets, pickled results)
+├── img/                          # Images
+│   └── logo.png
+├── misc/                         # Auxiliary scripts and notebooks
+│   ├── create_datasets.py        # Script to create datasets
+│   ├── load_dataset.py           # Script to load datasets
+│   ├── resulting_corr.ipynb      # Correlation analysis notebook
+│   └── results_novelpy.ipynb     # Novelpy results notebook
+├── texts/                        # Markdown texts for the Gradio app
+│   ├── intro.md
+│   └── bottom.md
+└── utils/                        # Utility modules
+    ├── embeddings.py             # Embedding computation (SPECTER2)
+    ├── score.py                  # Score calculation logic
+    └── utils.py                  # Helper functions (API, data loading)
+```
+
+----------------------
 LEGAL AND ETHICAL ASPECTS
 ----------------------
 
