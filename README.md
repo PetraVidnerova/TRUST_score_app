@@ -12,7 +12,7 @@ GENERAL INFORMATION
 
 - Software title: TRUST Score Calculator
 
-- Software DOI: http://doi.org/10.5281/zenodo.19064747 
+- Software DOI: https://doi.org/10.5281/zenodo.19089179
 
 - Authors:
 
@@ -93,7 +93,7 @@ LEGAL AND ETHICAL ASPECTS
 CITATION OF THIS SOFTWARE
 ----------------------
 
-Vidnerová, et al. (2026). TRUST Score Calculator. Zenodo. http://doi.org/10.5281/zenodo.19064747 
+Vidnerová, et al. (2026). TRUST Score Calculator. Zenodo. https://doi.org/10.5281/zenodo.19089179
 
 
 
