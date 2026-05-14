@@ -37,7 +37,7 @@
   "access_right": "open",
   "license": "mit",
   "communities": [
-    {"identifier": "icscas"}
+    {"identifier": "icscas", "opjaktrust"}
   ],
   "keywords": [
     "novelty detection",
